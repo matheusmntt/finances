@@ -79,6 +79,11 @@ function lerConfig(db) {
     config[linha.chave] = linha.valor;
   });
   config.cdbTaxaMensal = Number(config.cdbTaxaMensal || 0);
+  // Vazio: o salário previsto vem da última folha de pagamento de mês cheio.
+  config.salarioPrevisto = config.salarioPrevisto ? Number(config.salarioPrevisto) : null;
+  config.reservaMeses = config.reservaMeses ? Number(config.reservaMeses) : 6;
+  // Cenário da Projeção: quanto do salário bruto é guardado depois que a dívida zera.
+  config.poupancaPercentual = config.poupancaPercentual ? Number(config.poupancaPercentual) : 20;
   return config;
 }
 
@@ -250,6 +255,7 @@ function lerEstado(db) {
         ordem: c.ordem,
       })),
     holerites: lerHolerites(db),
+    metas: db.prepare("SELECT id, nome, valor, ordem FROM metas ORDER BY ordem, id").all().map((m) => ({ ...m })),
   };
 }
 

@@ -3,7 +3,7 @@
   "use strict";
 
   const App = window.App;
-  const { $, esc, reais, plural } = App;
+  const { $, esc, reais, plural, htmlAvisos, htmlSecao, juntar } = App;
 
   const estado = {
     mes: null, // mês aberto na aba Mês
@@ -75,34 +75,6 @@
           )
           .join("")}
       </dl>
-    </section>`;
-  }
-
-  function htmlAvisos(avisos) {
-    return avisos
-      .map(
-        (a) => `<div class="aviso-cartao aviso-${a.tipo}" role="note">
-          ${a.tipo === "info" ? App.ICONES.info : App.ICONES.alerta}
-          <div>${a.html}</div>
-        </div>`
-      )
-      .join("");
-  }
-
-  function htmlSecao(titulo, descricao, total, legendaTotal, corpo, extraTopo = "") {
-    const totalHtml = total
-      ? `<div class="secao-total"><strong>${total}</strong><span>${legendaTotal}</span></div>`
-      : "";
-    return `<section class="secao">
-      <header class="secao-topo">
-        <div>
-          <h2>${titulo}</h2>
-          ${descricao ? `<p>${descricao}</p>` : ""}
-        </div>
-        ${totalHtml}
-      </header>
-      ${extraTopo}
-      ${corpo}
     </section>`;
   }
 
@@ -270,9 +242,25 @@
     </div>`;
   }
 
+  function htmlSalarioPrevisto(mes) {
+    const p = App.mesDados(mes);
+    if (!p.salarioPrevisto) return "";
+    const { folha } = c().salario;
+    const origem = folha ? `Líquido da ${App.nomeFolha(folha)}` : "Valor definido no Backoffice";
+    return `<div class="conta">
+      <span class="marcador" aria-hidden="true"></span>
+      <div class="conta-info">
+        <div class="conta-nome"><span>Salário previsto</span><a class="tag tag-link" href="#salario">previsto</a></div>
+        <p class="meta">${esc(origem)}. Sai quando você enviar a folha paga neste mês.</p>
+      </div>
+      <div class="conta-valor">${reais(p.salarioPrevisto)}</div>
+    </div>`;
+  }
+
   function htmlEntradas(mes) {
     const entradas = d().entradas.filter((e) => e.mes === mes);
     const folhas = d().holerites.filter((h) => h.mes === mes);
+    const previsto = htmlSalarioPrevisto(mes);
     const linhas = entradas
       .map(
         (e) => `<div class="conta conta-editavel">
@@ -301,9 +289,9 @@
       "Entradas",
       "O salário CLT vem da folha de pagamento: envie o PDF e o líquido entra no mês em que foi pago. Notas PJ e outros recebimentos você lança aqui.",
       `<span id="mes-entradas-total">${reais(App.mesDados(mes).entradas)}</span>`,
-      plural(entradas.length + folhas.length, "entrada", "entradas"),
-      `<div class="cartao contas">${folhas.map(htmlFolha).join("")}${
-        linhas || (folhas.length ? "" : '<p class="vazio-linha">Nenhuma entrada lançada.</p>')
+      plural(entradas.length + folhas.length + (previsto ? 1 : 0), "entrada", "entradas"),
+      `<div class="cartao contas">${folhas.map(htmlFolha).join("")}${previsto}${
+        linhas || (folhas.length || previsto ? "" : '<p class="vazio-linha">Nenhuma entrada lançada.</p>')
       }${htmlFormAdicionar("entrada", "Nova entrada (ex.: Nota PJ)")}${enviar}</div>`,
       aviso
     );
@@ -1048,177 +1036,5 @@
     }
   }
 
-  // ---------- Aba "Projeção" ----------
-
-  function faixas(indices) {
-    const grupos = [];
-    indices.forEach((i) => {
-      const g = grupos[grupos.length - 1];
-      if (g && g[1] === i - 1) g[1] = i;
-      else grupos.push([i, i]);
-    });
-    const { meses } = c();
-    return grupos.map(([a, b]) => (a === b ? App.mesCurto(meses[a]) : `${App.mesCurto(meses[a])} a ${App.mesCurto(meses[b])}`));
-  }
-
-  function juntar(lista) {
-    if (lista.length <= 1) return lista.join("");
-    return `${lista.slice(0, -1).join(", ")} e ${lista[lista.length - 1]}`;
-  }
-
-  function dadosProjecao() {
-    const { meses, porMes } = c();
-    const ultimo = meses.length - 1;
-    const primeiro = Math.max(0, porMes.findIndex((p) => p.entradas || p.totalDespesas));
-    let iFim = -1;
-    d().despesas.forEach((despesa) => {
-      const ultimoMes = Object.keys(despesa.valores).sort().pop();
-      const i = c().indice.get(ultimoMes);
-      if (i != null && i < ultimo) iFim = Math.max(iFim, i);
-    });
-    const sobras = porMes.slice(iFim + 1).map((p) => p.saldo);
-    return { ultimo, primeiro, iFim, sobras };
-  }
-
-  function pontosDeAtencao() {
-    const { porMes } = c();
-    const pontos = [];
-    const indices = porMes.map((_, i) => i);
-
-    const negativos = indices.filter((i) => porMes[i].qtd && porMes[i].saldo < 0);
-    if (negativos.length) {
-      pontos.push({
-        tipo: "alerta",
-        html: `<strong>${juntar(faixas(negativos))} ${negativos.length === 1 ? "fecha" : "fecham"} no vermelho</strong> (${negativos
-          .map((i) => reais(porMes[i].saldo))
-          .join(", ")}). ${porMes[negativos[negativos.length - 1]].acumulado >= 0 ? "A sobra dos meses anteriores cobre, mas não deixa folga." : "O saldo acumulado também fica negativo."}`,
-      });
-    }
-
-    const apertados = indices.filter((i) => {
-      const p = porMes[i];
-      return p.qtd && p.entradas && p.saldo >= 0 && p.saldo < p.entradas * 0.05;
-    });
-    if (apertados.length) {
-      const valores = apertados.map((i) => porMes[i].saldo);
-      pontos.push({
-        tipo: "alerta",
-        html: `<strong>Meses apertados: ${juntar(faixas(apertados))}.</strong> Sobram entre ${reais(Math.min(...valores))} e ${reais(
-          Math.max(...valores)
-        )} por mês. Um gasto inesperado nesse período já desequilibra o plano.`,
-      });
-    }
-
-    const dv = c().divida;
-    if (dv.plano !== dv.previsto) {
-      pontos.push({
-        tipo: "info",
-        html: `<strong>O plano devolve ${reais(Math.abs(dv.plano - dv.previsto))} ${dv.plano > dv.previsto ? "a mais" : "a menos"} do que eles pagam</strong> (${reais(
-          dv.plano
-        )} × ${reais(dv.previsto)}). Detalhes e edição na aba <a href="#divida">Greici e André</a>.`,
-      });
-    }
-    return pontos;
-  }
-
-  function htmlTabelaMeses() {
-    const linhas = c()
-      .porMes.map((p) => {
-        const atual = p.mes === App.mesAtual;
-        const celula = (v, classe = "") => `<td class="num${classe}">${v == null ? "—" : reais(v)}</td>`;
-        const deles = p.qtd === 0 && p.pagoPorCredores ? ' <span class="tag">Greici e André</span>' : "";
-        return `<tr${atual ? ' class="atual"' : ""} data-ir-mes="${p.mes}">
-          <th scope="row"><a href="#mes/${p.mes}">${App.mesCurto(p.mes)}</a>${deles}${atual ? ' <span class="tag">atual</span>' : ""}</th>
-          ${celula(p.entradas)}
-          ${celula(p.totalDespesas)}
-          ${celula(p.saldo, p.saldo < 0 ? " negativo" : "")}
-          ${celula(p.acumulado, p.acumulado < 0 ? " negativo" : "")}
-          ${celula(p.cdbSimples)}
-          ${celula(p.cdbComposto)}
-        </tr>`;
-      })
-      .join("");
-    return `<div class="cartao tabela-wrap tabela-rolagem">
-      <table class="tabela">
-        <thead><tr>
-          <th scope="col">Mês</th>
-          <th scope="col" class="num">Entradas</th>
-          <th scope="col" class="num">Despesas</th>
-          <th scope="col" class="num">Saldo do mês</th>
-          <th scope="col" class="num">Acumulado</th>
-          <th scope="col" class="num">CDB sem juros compostos</th>
-          <th scope="col" class="num">CDB com juros compostos</th>
-        </tr></thead>
-        <tbody>${linhas}</tbody>
-      </table>
-    </div>`;
-  }
-
-  function renderProjecao() {
-    const raiz = $("#view-projecao");
-    const { meses, porMes } = c();
-    const proj = dadosProjecao();
-    const fim = porMes[proj.ultimo];
-    const taxa = d().config.cdbTaxaMensal || 0;
-    const taxaTexto = `${(taxa * 100).toLocaleString("pt-BR")}% ao mês`;
-
-    const kpis = [];
-    if (proj.iFim >= 0) {
-      const faltam = App.diferencaMeses(App.mesAtual, meses[proj.iFim]);
-      kpis.push({ rotulo: "Fim das parcelas e devoluções", valor: App.nomeMes(meses[proj.iFim]), sub: faltam > 0 ? `daqui a ${plural(faltam, "mês", "meses")}` : "" });
-      if (proj.sobras.length) {
-        const min = Math.min(...proj.sobras);
-        const max = Math.max(...proj.sobras);
-        kpis.push({
-          rotulo: "Sobra por mês depois disso",
-          valor: min === max ? App.reaisInteiros(min) : `${App.reaisInteiros(min)} a ${App.reaisInteiros(max).replace(/^R\$\s*/, "")}`,
-          sub: `a partir de ${App.nomeMes(meses[proj.iFim + 1])}`,
-        });
-      }
-    }
-    kpis.push({ rotulo: `Guardado em ${App.mesCurto(fim.mes)}`, valor: reais(fim.acumulado), sub: "somando as sobras, sem rendimento" });
-    kpis.push({ rotulo: "CDB com juros compostos", valor: reais(fim.cdbComposto), sub: `${taxaTexto}; o rendimento também rende` });
-    kpis.push({ rotulo: "CDB sem juros compostos", valor: reais(fim.cdbSimples), sub: "fórmula da planilha: 1 mês de rendimento" });
-
-    raiz.innerHTML = `
-      <div class="kpis">
-        ${kpis
-          .map((k) => `<div class="cartao stat"><p class="stat-rotulo">${k.rotulo}</p><p class="stat-valor">${k.valor}</p><p class="sub">${k.sub}</p></div>`)
-          .join("")}
-      </div>
-      <section class="cartao grafico-cartao">
-        <div class="grafico-topo">
-          <div>
-            <h2>Quanto você vai ter guardado</h2>
-            <p class="sub">Saldo acumulado de ${App.mesCurto(meses[proj.primeiro])} a ${App.mesCurto(fim.mes)}</p>
-          </div>
-          <ul class="legenda">
-            <li><span class="chave-linha serie-1"></span>Saldo acumulado</li>
-            <li><span class="chave-linha serie-2"></span>CDB com juros compostos</li>
-          </ul>
-        </div>
-        <div class="grafico" id="grafico-projecao"></div>
-      </section>
-      ${htmlSecao("Pontos de atenção", "Calculados com as entradas, despesas e extras de hoje.", "", "", htmlAvisos(pontosDeAtencao()) || '<p class="sub">Nada fora do normal.</p>')}
-      ${htmlSecao("Mês a mês", "Clique em um mês para ver as contas.", "", "", htmlTabelaMeses())}`;
-
-    App.desenharGrafico($("#grafico-projecao"), {
-      meses: meses.slice(proj.primeiro),
-      series: [
-        { nome: "Saldo acumulado", classe: "serie-1", valores: porMes.slice(proj.primeiro).map((p) => p.acumulado) },
-        { nome: "CDB com juros compostos", classe: "serie-2", valores: porMes.slice(proj.primeiro).map((p) => p.cdbComposto) },
-      ],
-      marco: proj.iFim >= proj.primeiro ? { i: proj.iFim - proj.primeiro, texto: "Fim das devoluções" } : null,
-    });
-
-    if (!raiz.dataset.pronto) {
-      raiz.addEventListener("click", (e) => {
-        const linha = e.target.closest("[data-ir-mes]");
-        if (linha && !e.target.closest("a")) location.hash = `#mes/${linha.dataset.irMes}`;
-      });
-      raiz.dataset.pronto = "1";
-    }
-  }
-
-  App.financas = { renderMes, renderDivida, renderProjecao, definirMes };
+  App.financas = { renderMes, renderDivida, definirMes };
 })();

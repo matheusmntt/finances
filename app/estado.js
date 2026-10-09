@@ -106,12 +106,23 @@
 
   // ---------- Cálculos ----------
 
+  // Salário dos meses sem folha, daqui para a frente: o valor fixado no Backoffice ou o líquido da
+  // última folha mensal de mês cheio (a de um mês incompleto, como a do primeiro mês, não serve).
+  function salarioPrevisto(d) {
+    if (d.config.salarioPrevisto) return { valor: d.config.salarioPrevisto, folha: null };
+    const folha = d.holerites
+      .filter((h) => /mensal/i.test(h.tipo) && (!h.salarioMensal || h.totalVencimentos >= h.salarioMensal))
+      .sort((a, b) => b.competencia.localeCompare(a.competencia) || b.id - a.id)[0];
+    return folha ? { valor: folha.liquido, folha } : null;
+  }
+
   function calcular(d) {
     const meses = listaMeses(d);
     const indice = new Map(meses.map((m, i) => [m, i]));
     const porMes = meses.map((mes) => ({
       mes,
       entradas: 0,
+      salarioPrevisto: 0,
       despesas: 0,
       extras: 0,
       pagoPorCredores: 0,
@@ -127,6 +138,16 @@
     d.holerites.forEach((h) => {
       porMes[indice.get(h.mes)].entradas += h.liquido;
     });
+    const salario = salarioPrevisto(d);
+    const mesesComFolha = new Set(d.holerites.filter((h) => /mensal/i.test(h.tipo)).map((h) => h.mes));
+    if (salario) {
+      porMes
+        .filter((p) => p.mes >= App.mesAtual && !mesesComFolha.has(p.mes))
+        .forEach((p) => {
+          p.salarioPrevisto = salario.valor;
+          p.entradas += salario.valor;
+        });
+    }
     d.despesas.forEach((despesa) =>
       Object.entries(despesa.valores).forEach(([mes, v]) => {
         const p = porMes[indice.get(mes)];
@@ -172,7 +193,7 @@
       }
     });
 
-    return { meses, indice, porMes, divida: calcularDivida(d), carro: calcularCarro(d) };
+    return { meses, indice, porMes, salario, divida: calcularDivida(d), carro: calcularCarro(d) };
   }
 
   function calcularCarro(d) {

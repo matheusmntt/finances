@@ -50,6 +50,9 @@
         { campo: "placa", rotulo: "Placa do carro", tipo: "texto", max: 10, opcional: true },
         { campo: "categoriaContasPagasPorCredores", rotulo: "Categoria das contas pagas por eles", tipo: "categoria", largo: true },
         { campo: "categoriaCarro", rotulo: "Categoria do carro", tipo: "categoria", largo: true },
+        { campo: "salarioPrevisto", rotulo: "Salário previsto (vazio: última folha)", tipo: "centavos", opcional: true },
+        { campo: "reservaMeses", rotulo: "Reserva de emergência (meses)", tipo: "inteiro" },
+        { campo: "poupancaPercentual", rotulo: "Cenário: % do bruto guardado depois da dívida", tipo: "inteiro" },
       ],
     },
     {
@@ -267,6 +270,21 @@
       criar: [{ campo: "codigo", rotulo: "Código", tipo: "texto", max: 12 }, "descricao", "tipo"],
     },
     {
+      id: "metas",
+      titulo: "Metas",
+      novo: "Adicionar meta",
+      descricao: "Valores de patrimônio acompanhados na aba Projeção.",
+      registros: () => App.dados.metas,
+      chave: (x) => x.id,
+      nome: (x) => x.nome,
+      campos: [
+        { campo: "nome", rotulo: "Nome", tipo: "texto", max: 60, largo: true },
+        { campo: "valor", rotulo: "Valor", tipo: "centavos" },
+        { campo: "ordem", rotulo: "Ordem", tipo: "inteiro" },
+      ],
+      criar: ["nome", "valor"],
+    },
+    {
       id: "grupos",
       titulo: "Grupos de despesas",
       novo: "Adicionar grupo",
@@ -369,7 +387,8 @@
       case "booleano":
         return el.checked;
       case "centavos":
-        return texto === "" ? undefined : App.lerReais(texto) ?? undefined;
+        if (texto === "") return def.opcional ? null : undefined;
+        return App.lerReais(texto) ?? undefined;
       case "taxa": {
         const numero = Number(texto.includes(",") ? texto.replace(/\./g, "").replace(",", ".") : texto);
         return texto === "" || !Number.isFinite(numero) ? undefined : Number((numero / 100).toFixed(8));

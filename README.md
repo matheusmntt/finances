@@ -66,11 +66,24 @@ Na aba **Salário** (ou em "Enviar folha de pagamento", na seção Entradas da a
 
 O **líquido entra nas entradas do mês em que foi pago** (a data do recibo): a folha de 08/2026 paga em 04/09/2026 conta em setembro. Para contar em outro mês, mude "Entra no mês" no Backoffice. Se você já tinha lançado esse salário como entrada à mão, a aba Mês avisa para remover a entrada antiga.
 
+**Salário previsto.** Do mês atual em diante, cada mês sem folha mensal recebe o líquido da última folha de mês cheio (a de um mês incompleto, como a do primeiro mês na empresa, não conta). Ele aparece como "Salário previsto" na aba Mês e some quando a folha daquele mês é enviada. Para usar outro valor (um aumento já combinado, por exemplo), preencha "Salário previsto" nas configurações do Backoffice; vazio volta a usar a folha. 13º, férias, notas PJ e outras rendas são lançados como entradas.
+
 O leitor espera o modelo do recibo atual ("Folha Mensal de MM/AAAA", tabela com Hrs/Qtde, Vencimentos e Descontos, totais e "Líquido") e confere se os itens fecham com os totais e o líquido. Se não fecharem, ou se o PDF for outro modelo, ele recusa o arquivo e nada é salvo. A mesma folha (tipo e competência) não pode ser enviada duas vezes.
+
+## Projeção
+
+- **Cards:** quando você fica livre das dívidas, a sobra por mês depois disso, o guardado no fim do plano, o patrimônio de hoje e o salário previsto.
+- **Gráficos:** guardado, o que falta devolver e patrimônio (guardado menos a dívida), e a sobra de cada mês, nos próximos 12 meses ou até o fim do plano. O tracejado e as barras mais claras são previsão.
+- **CDB:** a sobra de cada mês a partir de `cdbInicio` vira um lote que rende `cdbTaxaMensal` e paga IR pela tabela regressiva (22,5% até 6 meses, 20% até 12, 17,5% até 24 e 15% depois). O guardado mostrado já é líquido de IR.
+- **Dívida:** parte do total que a Greici e o André pagam (inclusive o que falta do carro) e desconta as parcelas de devolução; nos meses que já passaram, só as marcadas como pagas.
+- **Cenário guardando X% do bruto:** uma linha a mais no gráfico (e uma coluna na tabela) em que, depois que a dívida zera, você guarda só X% do salário bruto da última folha mensal (ou a sobra, se for menor) e gasta o resto, em vez de investir toda a sobra. X fica no próprio gráfico (padrão 20%).
+- **Metas:** a reserva de emergência (N meses do custo de vida depois das parcelas; N fica nas configurações) e metas suas em reais, com o mês em que o patrimônio chega no valor nos dois cenários. No cenário dos X%, o custo de vida é a renda menos o que é guardado, então a reserva precisa ser maior.
+- **Simulador:** renda a mais ou a menos a partir de um mês, gasto extra (ou economia), antecipar a devolução e outra taxa do CDB. Muda só o que a aba mostra; nada é salvo.
+- **Mês a mês:** um resumo por ano que abre os meses.
 
 ## Backoffice
 
-A aba **Backoffice** edita direto no banco tudo o que as outras abas não editam: configurações do plano e do CDB, despesas (nome, grupo, devolução, ordem e o valor de cada mês), entradas, extras, o que a Greici e o André pagaram, multas, outras despesas do carro, folhas de pagamento, infrações, grupos e categorias da dívida. Cada campo é salvo ao sair dele, com a mesma validação do servidor, e não há como desfazer: baixe um backup antes de mudanças grandes.
+A aba **Backoffice** edita direto no banco tudo o que as outras abas não editam: configurações do plano, do CDB, do salário previsto e da reserva de emergência, despesas (nome, grupo, devolução, ordem e o valor de cada mês), entradas, extras, o que a Greici e o André pagaram, multas, outras despesas do carro, folhas de pagamento, metas, infrações, grupos e categorias da dívida. Cada campo é salvo ao sair dele, com a mesma validação do servidor, e não há como desfazer: baixe um backup antes de mudanças grandes.
 
 Multas, infrações e os dados de guia dos custos do carro alterados ali ficam marcados e o importador de boletos não os sobrescreve mais. Multas não podem ser removidas (o importador as traria de volta); para tirar uma da conta, zere o valor.
 

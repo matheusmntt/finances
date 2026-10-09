@@ -9,7 +9,7 @@
     mes: { titulo: "Mês", render: () => App.financas.renderMes() },
     salario: { titulo: "Salário", render: () => App.salario.render() },
     divida: { titulo: "Greici e André", render: () => App.financas.renderDivida() },
-    projecao: { titulo: "Projeção", render: () => App.financas.renderProjecao() },
+    projecao: { titulo: "Projeção", render: () => App.projecao.render() },
     multas: { titulo: "Multas", render: () => App.multas.render() },
     backoffice: { titulo: "Backoffice", render: () => App.backoffice.render() },
   };
@@ -58,7 +58,7 @@
     window.addEventListener("resize", () => {
       clearTimeout(timerRedimensionar);
       timerRedimensionar = setTimeout(() => {
-        if (abaAtual === "projecao") App.financas.renderProjecao();
+        if (abaAtual === "projecao") App.projecao.render();
       }, 150);
     });
 

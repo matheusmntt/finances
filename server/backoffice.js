@@ -22,6 +22,7 @@ const tipo = {
   // Colunas NOT NULL que aceitam texto vazio.
   textoLivre: (max) => (v, nome) => (vazio(v) ? "" : texto(v, nome, max)),
   centavos: (minimo = 0) => (v, nome) => centavos(v, nome, { minimo }),
+  centavosOpcional: (minimo = 0) => (v, nome) => (vazio(v) ? null : centavos(v, nome, { minimo })),
   inteiro: (minimo, maximo) => (v, nome) => {
     if (!Number.isInteger(v) || v < minimo || v > maximo) {
       throw new ErroValidacao(`Confira ${nome}: use um número inteiro entre ${minimo} e ${maximo}.`);
@@ -260,6 +261,20 @@ const ENTIDADES = {
   },
 
 
+  // Metas de patrimônio mostradas na aba Projeção.
+  metas: {
+    tabela: "metas",
+    chave: "id",
+    numerica: true,
+    campos: {
+      nome: campo("nome", "o nome da meta", tipo.texto(60)),
+      valor: campo("valor", "valor da meta", tipo.centavos(1)),
+      ordem,
+    },
+    criar: { campos: ["nome", "valor"] },
+    remover: true,
+  },
+
   // Folhas de pagamento: entram pelo envio do PDF (aba Salário); aqui se corrige o que foi lido.
   holerites: {
     tabela: "holerites",
@@ -307,6 +322,9 @@ const CONFIG = {
   cdbTaxaMensal: ["a taxa do CDB", tipo.taxa()],
   cdbInicio: ["o início do CDB", tipo.mesOpcional()],
   placa: ["a placa", tipo.textoOpcional(10)],
+  salarioPrevisto: ["o salário previsto", tipo.centavosOpcional()],
+  reservaMeses: ["os meses da reserva de emergência", tipo.inteiro(1, 36)],
+  poupancaPercentual: ["a porcentagem do salário bruto guardada", tipo.inteiro(1, 100)],
 };
 
 // ---------- Operações ----------

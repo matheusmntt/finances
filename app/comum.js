@@ -23,6 +23,12 @@
 
   App.plural = (n, singular, varios) => `${n} ${n === 1 ? singular : varios}`;
 
+  // ["luz", "internet", "faxina"] -> "luz, internet e faxina"
+  App.juntar = (lista) => {
+    if (lista.length <= 1) return lista.join("");
+    return `${lista.slice(0, -1).join(", ")} e ${lista[lista.length - 1]}`;
+  };
+
   App.esc = (texto) =>
     String(texto).replace(
       /[&<>"']/g,
@@ -204,6 +210,33 @@
     if (!novo) return;
     novo.focus();
     if (selecao && typeof novo.setSelectionRange === "function") novo.setSelectionRange(selecao[0], selecao[1]);
+  };
+
+  // ---------- Peças de HTML ----------
+
+  App.htmlAvisos = (avisos) =>
+    avisos
+      .map(
+        (a) => `<div class="aviso-cartao aviso-${a.tipo}" role="note">
+          ${a.tipo === "info" ? App.ICONES.info : App.ICONES.alerta}
+          <div>${a.html}</div>
+        </div>`
+      )
+      .join("");
+
+  App.htmlSecao = (titulo, descricao, total, legendaTotal, corpo, extraTopo = "") => {
+    const totalHtml = total ? `<div class="secao-total"><strong>${total}</strong><span>${legendaTotal}</span></div>` : "";
+    return `<section class="secao">
+      <header class="secao-topo">
+        <div>
+          <h2>${titulo}</h2>
+          ${descricao ? `<p>${descricao}</p>` : ""}
+        </div>
+        ${totalHtml}
+      </header>
+      ${extraTopo}
+      ${corpo}
+    </section>`;
   };
 
   // ---------- Ícones ----------

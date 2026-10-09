@@ -198,6 +198,23 @@ const MIGRACOES = [
     PRIMARY KEY (holerite_id, ordem)
   );
   `,
+  `
+  -- O salário dos próximos meses passa a ser previsto pela última folha de pagamento (ou pelo valor
+  -- fixado em config.salarioPrevisto). As previsões da planilha saem dos meses com folha mensal e dos
+  -- meses daqui para a frente; as dos meses que já passaram ficam como "Salário".
+  DELETE FROM entradas WHERE descricao = 'Entradas previstas (planilha)'
+    AND (mes IN (SELECT mes FROM holerites WHERE tipo LIKE '%Mensal%') OR mes >= strftime('%Y-%m', 'now', 'localtime'));
+  UPDATE entradas SET descricao = 'Salário' WHERE descricao = 'Entradas previstas (planilha)';
+
+  -- Metas de patrimônio da aba Projeção.
+  CREATE TABLE metas (
+    id INTEGER PRIMARY KEY,
+    nome TEXT NOT NULL,
+    valor INTEGER NOT NULL,             -- centavos
+    ordem INTEGER NOT NULL DEFAULT 0,
+    criado_em TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  `,
 ];
 
 function abrir(caminho) {

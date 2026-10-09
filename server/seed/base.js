@@ -56,7 +56,8 @@ module.exports = {
     "despesas-fixas/faxina-mes": { nomeCurto: "Faxina" },
   },
 
-  descricaoEntradaPrevista: "Entradas previstas (planilha)",
+  // Entradas da planilha (só o salário CLT) dos meses que já passaram.
+  descricaoSalario: "Salário",
 
   // Outras coisas que eles pagaram, além das contas de agosto e das despesas da Greici.
   emprestimos: [

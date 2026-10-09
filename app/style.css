@@ -25,6 +25,8 @@
   --accent-soft: #e9effc;
   --serie-1: #2a78d6;
   --serie-2: #eb6834;
+  --serie-3: #1baf7a;
+  --serie-4: #eda100;
   --radius: 12px;
   --radius-sm: 8px;
   --shadow: 0 1px 2px rgb(16 24 40 / 0.05), 0 1px 3px rgb(16 24 40 / 0.04);
@@ -32,7 +34,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #0e1115;
     --surface: #161a20;
     --surface-2: #1d222a;
@@ -52,8 +54,41 @@
     --accent-soft: #1b2744;
     --serie-1: #3987e5;
     --serie-2: #d95926;
+    --serie-3: #199e70;
+    --serie-4: #c98500;
     --shadow: none;
   }
+}
+
+/* Tema escolhido no botão do topo (app/tema.js): vale mais que o do sistema. Mantenha igual ao bloco acima. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1115;
+  --surface: #161a20;
+  --surface-2: #1d222a;
+  --border: #282e37;
+  --border-strong: #3a414c;
+  --text: #e7eaef;
+  --muted: #98a1b0;
+  --accent: #7096ff;
+  --on-accent: #0b1020;
+  --ok: #4cc38a;
+  --on-ok: #08140d;
+  --ok-soft: #12291b;
+  --warn: #f0b14d;
+  --warn-soft: #33260e;
+  --danger: #ff7d7d;
+  --danger-soft: #361616;
+  --accent-soft: #1b2744;
+  --serie-1: #3987e5;
+  --serie-2: #d95926;
+  --serie-3: #199e70;
+  --serie-4: #c98500;
+  --shadow: none;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 body {
@@ -881,6 +916,10 @@ h1 {
   color: var(--danger) !important;
 }
 
+.positivo {
+  color: var(--ok) !important;
+}
+
 .resumo a,
 .aviso-cartao a {
   color: var(--accent);
@@ -1270,6 +1309,31 @@ h1 {
   background: var(--serie-2);
 }
 
+.chave-linha.serie-3 {
+  background: var(--serie-3);
+}
+
+.chave-linha.serie-4 {
+  background: var(--serie-4);
+}
+
+.chave-linha.chave-prevista {
+  background: repeating-linear-gradient(90deg, var(--muted) 0 4px, transparent 4px 7px);
+}
+
+.chave-barra {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--serie-1);
+}
+
+.chave-barra.negativa {
+  background: var(--danger);
+}
+
 .grafico {
   position: relative;
 }
@@ -1301,6 +1365,10 @@ h1 {
   shape-rendering: crispEdges;
 }
 
+.grafico .grade line.zero {
+  stroke: var(--border-strong);
+}
+
 .grafico .linha {
   fill: none;
   stroke-width: 2;
@@ -1316,6 +1384,30 @@ h1 {
   stroke: var(--serie-2);
 }
 
+.grafico .linha.serie-3 {
+  stroke: var(--serie-3);
+}
+
+.grafico .linha.serie-4 {
+  stroke: var(--serie-4);
+}
+
+.grafico .linha.prevista {
+  stroke-dasharray: 5 4;
+}
+
+.grafico .barra.positiva {
+  fill: var(--serie-1);
+}
+
+.grafico .barra.negativa {
+  fill: var(--danger);
+}
+
+.grafico .barra.prevista {
+  opacity: 0.45;
+}
+
 .grafico .ponto {
   stroke: var(--surface);
   stroke-width: 2;
@@ -1327,6 +1419,14 @@ h1 {
 
 .grafico .ponto.serie-2 {
   fill: var(--serie-2);
+}
+
+.grafico .ponto.serie-3 {
+  fill: var(--serie-3);
+}
+
+.grafico .ponto.serie-4 {
+  fill: var(--serie-4);
 }
 
 .grafico .marco line {
@@ -1382,6 +1482,260 @@ h1 {
 
 .tooltip-linha span:last-child {
   color: var(--muted);
+}
+
+.grafico-topo-secundario {
+  margin-top: 18px;
+  margin-bottom: 4px;
+}
+
+.grafico-topo h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.grafico-cartao .legenda {
+  margin-bottom: 4px;
+}
+
+.stat-plano {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+.stat-plano + .stat-plano {
+  margin-top: 2px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.cenario-ajuste {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 6px 0 4px;
+}
+
+.cenario-ajuste .chave-linha {
+  position: relative;
+  top: -3px;
+}
+
+.cenario-ajuste .campo {
+  display: inline-block;
+  width: 64px;
+  height: 28px;
+  margin: 0 2px;
+  padding: 0 6px;
+}
+
+.meta-cenarios {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.meta-cenario {
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.meta-cenario-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.meta-cenario-topo strong {
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.meta-cenario .progresso {
+  margin: 8px 0 6px;
+}
+
+.simulador {
+  margin-bottom: 16px;
+}
+
+.simulador > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.simulador > summary::-webkit-details-marker {
+  display: none;
+}
+
+.simulador > summary .marcador-mais {
+  width: 24px;
+  color: var(--accent);
+}
+
+.simulador > summary .sub {
+  margin-left: auto;
+  font-weight: 400;
+}
+
+/* Os cinco campos e o "Limpar" numa linha, alinhados pela base. */
+.simulador .form-grade {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  align-items: end;
+  padding-bottom: 10px;
+}
+
+.simulador-nota {
+  margin: 0;
+  padding: 0 20px 18px 56px;
+}
+
+@media (max-width: 960px) {
+  .simulador .form-grade {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .simulador .form-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .simulador-nota {
+    padding: 0 16px 16px;
+  }
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.metas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+}
+
+.meta-cartao {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+}
+
+.meta-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.meta-topo .botao-icone {
+  width: 28px;
+  height: 28px;
+  margin: -4px -8px -4px 0;
+}
+
+.meta-status {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.meta-ajuste {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.meta-ajuste .campo {
+  width: 72px;
+  height: 30px;
+}
+
+.meta-nova {
+  margin-top: 12px;
+}
+
+.explicacao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px 32px;
+  padding: 20px 22px;
+}
+
+.explicacao-item h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.explicacao-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.explicacao-item strong {
+  color: var(--text);
+}
+
+.tabela-anos .linha-ano th,
+.tabela-anos .linha-ano td {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.tabela-anos tbody:first-of-type .linha-ano th,
+.tabela-anos tbody:first-of-type .linha-ano td {
+  border-top: 0;
+}
+
+.tabela-anos .linha-mes th {
+  padding-left: 40px;
+}
+
+.botao-ano {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.botao-ano svg {
+  transition: transform 0.2s;
+}
+
+.botao-ano[aria-expanded="false"] svg {
+  transform: rotate(-90deg);
 }
 
 /* Campos e formulários */
@@ -2126,6 +2480,11 @@ select.campo {
 
   .bo-grade {
     padding: 14px 16px 18px;
+  }
+
+  .explicacao {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px;
   }
 
   .bo-ficha > summary {

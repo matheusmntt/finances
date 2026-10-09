@@ -15,6 +15,7 @@ const PASTA_SEED = path.join(__dirname, "seed");
 
 // Tabelas de dados, na ordem em que podem ser apagadas.
 const TABELAS = [
+  "metas",
   "holerite_itens",
   "holerites",
   "despesa_valores",
@@ -95,12 +96,14 @@ function semear(db) {
       });
     });
 
-    // Entradas
+    // Salário dos meses que já passaram. Daqui para a frente ele é previsto pela última folha de pagamento.
+    const hoje = new Date();
+    const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
     const inserirEntrada = db.prepare("INSERT INTO entradas (mes, descricao, valor) VALUES (?, ?, ?)");
     contagem.entradas = 0;
     planilha.entradas.forEach((valor, i) => {
-      if (valor == null) return;
-      inserirEntrada.run(planilha.meses[i], base.descricaoEntradaPrevista, valor);
+      if (valor == null || planilha.meses[i] >= mesAtual) return;
+      inserirEntrada.run(planilha.meses[i], base.descricaoSalario, valor);
       contagem.entradas++;
     });
 
