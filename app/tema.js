@@ -26,6 +26,13 @@
     else delete raiz.dataset.theme;
   }
 
+  // Cor da barra do navegador e do app instalado: o fundo do tema em uso.
+  function atualizarCorDaBarra() {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const fundo = getComputedStyle(raiz).getPropertyValue("--bg").trim();
+    if (meta && fundo) meta.setAttribute("content", fundo);
+  }
+
   const atual = () => (raiz.dataset.theme ? (raiz.dataset.theme === "dark" ? "escuro" : "claro") : sistemaEscuro.matches ? "escuro" : "claro");
 
   // O botão mostra o tema para o qual ele muda.
@@ -38,6 +45,8 @@
   }
 
   aplicar(salvo());
+  atualizarCorDaBarra();
+  sistemaEscuro.addEventListener("change", atualizarCorDaBarra);
 
   document.addEventListener("DOMContentLoaded", () => {
     const botao = document.getElementById("tema");
@@ -46,6 +55,7 @@
     botao.addEventListener("click", () => {
       const novo = atual() === "escuro" ? "claro" : "escuro";
       aplicar(novo);
+      atualizarCorDaBarra();
       try {
         localStorage.setItem(CHAVE, novo);
       } catch (e) {

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sem conexão · Minhas finanças</title>
+  <link rel="icon" href="/app/favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f5f7;
+      --surface: #ffffff;
+      --border: #e1e4e9;
+      --text: #151a22;
+      --muted: #5f6877;
+      --accent: #2456d3;
+      --on-accent: #ffffff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1115;
+        --surface: #161a20;
+        --border: #282e37;
+        --text: #e7eaef;
+        --muted: #98a1b0;
+        --accent: #7096ff;
+        --on-accent: #0b1020;
+      }
+    }
+
+    body {
+      display: grid;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px 16px;
+      box-sizing: border-box;
+      place-items: center;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    main {
+      max-width: 400px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    img {
+      width: 40px;
+      height: 40px;
+    }
+
+    h1 {
+      margin: 14px 0 6px;
+      font-size: 22px;
+    }
+
+    p {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    a {
+      display: inline-block;
+      padding: 9px 16px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: var(--on-accent);
+      font-weight: 600;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="/app/favicon.svg" alt="">
+    <h1>Sem conexão</h1>
+    <p>Os seus dados ficam no servidor, então o app precisa de internet para abrir. Confira a conexão e tente de novo.</p>
+    <a href="/">Tentar de novo</a>
+  </main>
+</body>
+</html>

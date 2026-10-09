@@ -176,6 +176,7 @@ const TIPOS = {
   ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  ".json": "application/manifest+json; charset=utf-8",
 };
 
 function enviarArquivo(res, relativo) {
@@ -382,8 +383,11 @@ function paginas(req, res, caminho) {
     return enviarArquivo(res, "login.html");
   }
 
-  const estatico = caminho.match(/^\/app\/([a-z0-9-]+\.(?:js|css|svg|png))$/);
+  const estatico = caminho.match(/^\/app\/([a-z0-9-]+\.(?:js|css|svg|png|json|html))$/);
   if (estatico) return enviarArquivo(res, path.join("app", estatico[1]));
+
+  // O service worker precisa estar na raiz para valer no site inteiro (app instalado).
+  if (caminho === "/sw.js") return enviarArquivo(res, path.join("app", "sw.js"));
 
   const boleto = caminho.match(/^\/boletos\/(?:([A-Z]\d{9})|custo-(\d+))\.pdf$/);
   if (boleto) {

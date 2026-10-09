@@ -87,6 +87,16 @@ A aba **Backoffice** edita direto no banco tudo o que as outras abas não editam
 
 Multas, infrações e os dados de guia dos custos do carro alterados ali ficam marcados e o importador de boletos não os sobrescreve mais. Multas não podem ser removidas (o importador as traria de volta); para tirar uma da conta, zere o valor.
 
+## App instalado (PWA)
+
+O app pode ser instalado como aplicativo (precisa de HTTPS, que a hospedagem já tem):
+
+- **Chrome ou Edge no computador:** ícone de instalar na barra de endereço.
+- **Android (Chrome):** menu ⋮ → **Instalar app**.
+- **iPhone (Safari):** Compartilhar → **Adicionar à Tela de Início**.
+
+O `app/manifest.json` define nome, ícones (`app/icone-*.png`; o `maskable` é recortado no formato do Android) e atalhos para Mês, Salário e Projeção. O service worker (`app/sw.js`, servido em `/sw.js`) só mostra a página `app/offline.html` quando o servidor não responde. Ele **não guarda dados em cache**: contas, folhas e boletos vêm sempre do servidor. Ao mudar `offline.html`, troque o nome do cache (`financas-v1`) em `sw.js` para os aparelhos baixarem a versão nova.
+
 ## Backup
 
 O botão **Baixar backup** no topo do app baixa uma cópia do banco (`.db`). Para restaurar, pare o servidor e coloque o arquivo no lugar de `DB_PATH`.

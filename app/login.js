@@ -30,4 +30,7 @@
     botao.disabled = false;
     form.senha.select();
   });
+
+  // App instalável (PWA): o service worker mostra a página de sem conexão quando a rede cai.
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 })();

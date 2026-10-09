@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "Minhas finanças",
+  "short_name": "Finanças",
+  "description": "Plano para sair das dívidas: contas do mês, salário, dívida com a Greici e o André, projeção e multas do carro.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f5f7",
+  "theme_color": "#f4f5f7",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    { "src": "/app/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icone-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/app/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Contas do mês", "short_name": "Mês", "url": "/#mes", "icons": [{ "src": "/app/icone-192.png", "sizes": "192x192" }] },
+    { "name": "Enviar folha de pagamento", "short_name": "Salário", "url": "/#salario", "icons": [{ "src": "/app/icone-192.png", "sizes": "192x192" }] },
+    { "name": "Projeção", "short_name": "Projeção", "url": "/#projecao", "icons": [{ "src": "/app/icone-192.png", "sizes": "192x192" }] }
+  ]
+}
