@@ -151,6 +151,12 @@ const MIGRACOES = [
   UPDATE custos_carro SET chave = 'patio' WHERE descricao = 'Pátio do depósito';
   CREATE UNIQUE INDEX custos_carro_chave ON custos_carro(chave);
   `,
+  `
+  -- Registros alterados na aba Backoffice: o importador de boletos não sobrescreve mais.
+  ALTER TABLE multas ADD COLUMN editado_no_app INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE custos_carro ADD COLUMN editado_no_app INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE infracoes ADD COLUMN editado_no_app INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
 
 function abrir(caminho) {

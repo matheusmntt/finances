@@ -17,6 +17,7 @@ const crypto = require("node:crypto");
 const { abrir, estaVazio } = require("./db");
 const { semear } = require("./seed");
 const { importarBoletos } = require("./importar");
+const backoffice = require("./backoffice");
 const dados = require("./dados");
 
 const RAIZ = path.join(__dirname, "..");
@@ -257,6 +258,14 @@ const ROTAS = [
 
   ["POST", /^\/api\/emprestimos$/, alterar((p, c) => dados.criarEmprestimo(db, c))],
   ["DELETE", /^\/api\/emprestimos\/(\d+)$/, alterar((p) => dados.removerEmprestimo(db, p[1]))],
+
+  ["PUT", /^\/api\/backoffice\/config$/, alterar((p, c) => backoffice.atualizarConfig(db, c))],
+  ["POST", /^\/api\/backoffice\/despesas\/(\d+)\/meses$/, alterar((p, c) => backoffice.criarValoresMes(db, p[1], c))],
+  ["PATCH", /^\/api\/backoffice\/despesas\/(\d+)\/meses\/([\d-]+)$/, alterar((p, c) => backoffice.atualizarValorMes(db, p[1], p[2], c))],
+  ["DELETE", /^\/api\/backoffice\/despesas\/(\d+)\/meses\/([\d-]+)$/, alterar((p) => backoffice.removerValorMes(db, p[1], p[2]))],
+  ["POST", /^\/api\/backoffice\/([a-z-]+)$/, alterar((p, c) => backoffice.criar(db, p[1], c))],
+  ["PATCH", /^\/api\/backoffice\/([a-z-]+)\/([\w-]+)$/, alterar((p, c) => backoffice.atualizar(db, p[1], p[2], c))],
+  ["DELETE", /^\/api\/backoffice\/([a-z-]+)\/([\w-]+)$/, alterar((p) => backoffice.remover(db, p[1], p[2]))],
 ];
 
 async function login(req, res) {

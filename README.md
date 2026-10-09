@@ -60,6 +60,12 @@ Se o log mostrar "Não consigo gravar em /data", o volume foi montado sem permis
 
 > O repositório e a imagem contêm dados pessoais (boletos com placa e códigos de pagamento, valores da planilha). Mantenha o repositório **privado** e não publique a imagem em registros públicos.
 
+## Backoffice
+
+A aba **Backoffice** edita direto no banco tudo o que as outras abas não editam: configurações do plano e do CDB, despesas (nome, grupo, devolução, ordem e o valor de cada mês), entradas, extras, o que a Greici e o André pagaram, multas, outras despesas do carro, infrações, grupos e categorias da dívida. Cada campo é salvo ao sair dele, com a mesma validação do servidor, e não há como desfazer: baixe um backup antes de mudanças grandes.
+
+Multas, infrações e os dados de guia dos custos do carro alterados ali ficam marcados e o importador de boletos não os sobrescreve mais. Multas não podem ser removidas (o importador as traria de volta); para tirar uma da conta, zere o valor.
+
 ## Backup
 
 O botão **Baixar backup** no topo do app baixa uma cópia do banco (`.db`). Para restaurar, pare o servidor e coloque o arquivo no lugar de `DB_PATH`.
@@ -88,7 +94,7 @@ python3 ferramentas/extrair_dados.py   # precisa de: pip install pypdf openpyxl
 npm run importar                       # ou só reinicie o servidor
 ```
 
-O extrator reconhece a guia de multa do Detran (GAD/M), o boleto GRU da PRF e a guia de remoção e depósito do Detran (GAD-E). Ele confere os dígitos e o valor do código de barras. O importador acrescenta as multas novas e atualiza as existentes **sem apagar** nada do que foi marcado no app. A guia do depósito preenche o custo "Pátio do depósito".
+O extrator reconhece a guia de multa do Detran (GAD/M), o boleto GRU da PRF e a guia de remoção e depósito do Detran (GAD-E). Ele confere os dígitos e o valor do código de barras. O importador acrescenta as multas novas e atualiza as existentes **sem apagar** nada do que foi marcado no app. A guia do depósito preenche o custo "Pátio do depósito". Multas, infrações e custos alterados na aba Backoffice não são atualizados.
 
 ## Estrutura
 
@@ -97,6 +103,7 @@ index.html, login.html   páginas
 app/                     estilos e scripts do frontend
 server/server.js         servidor HTTP, login e rotas da API
 server/dados.js          leitura e alterações no banco (com validação)
+server/backoffice.js     edição direta das tabelas (aba Backoffice)
 server/db.js             esquema do banco e migrações
 server/seed.js           seeder
 server/importar.js       importa boletos novos sem apagar o que foi lançado

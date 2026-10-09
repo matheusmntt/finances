@@ -1,6 +1,6 @@
 // Importa os boletos extraídos dos PDFs (multas e guias do carro) sem apagar nada do que
 // foi lançado no app: multas novas entram, as existentes têm os dados atualizados e
-// continuam com a marcação de pago.
+// continuam com a marcação de pago. O que foi alterado na aba Backoffice não é sobrescrito.
 //
 //   npm run importar
 "use strict";
@@ -47,7 +47,8 @@ function importarBoletos(db) {
   transacao(db, () => {
     const infracao = db.prepare(
       `INSERT INTO infracoes (codigo, descricao, tipo) VALUES (?, ?, ?)
-       ON CONFLICT (codigo) DO UPDATE SET descricao = excluded.descricao, tipo = excluded.tipo`
+       ON CONFLICT (codigo) DO UPDATE SET descricao = excluded.descricao, tipo = excluded.tipo
+       WHERE infracoes.editado_no_app = 0`
     );
     base.infracoes.forEach((i) => infracao.run(i.codigo, i.descricao, i.tipo));
 
@@ -67,7 +68,8 @@ function importarBoletos(db) {
         velocidade_medida = excluded.velocidade_medida, velocidade_considerada = excluded.velocidade_considerada,
         velocidade_limite = excluded.velocidade_limite, guia = excluded.guia, expedida = excluded.expedida,
         validade = excluded.validade, valor_original = excluded.valor_original, juros = excluded.juros,
-        valor = excluded.valor, linha_digitavel = excluded.linha_digitavel`);
+        valor = excluded.valor, linha_digitavel = excluded.linha_digitavel
+      WHERE multas.editado_no_app = 0`);
     multas.forEach((b) => {
       if (existe.get(b.serie)) resultado.multasAtualizadas++;
       else resultado.multasNovas.push(b.serie);
@@ -91,15 +93,15 @@ function importarBoletos(db) {
     const aplicarGuia = db.prepare(
       `UPDATE custos_carro SET valor = ?, detalhe = ?, guia = ?, validade = ?, linha_digitavel = ?,
          arquivo = ?, pdf = COALESCE(?, pdf)
-       WHERE chave = ?`
+       WHERE chave = ? AND editado_no_app = 0`
     );
     guias.forEach((g) => {
       const chave = base.guiasCarro[g.tipo];
       if (!chave) return;
-      aplicarGuia.run(
+      const { changes } = aplicarGuia.run(
         g.valor, detalheGuia(g), g.guia, g.validade, g.linhaDigitavel, path.basename(g.arquivo), lerPdf(g.arquivo), chave
       );
-      resultado.guias.push(`${chave} (guia ${g.guia})`);
+      if (changes) resultado.guias.push(`${chave} (guia ${g.guia})`);
     });
   });
 

@@ -10,6 +10,7 @@
     divida: { titulo: "Greici e André", render: () => App.financas.renderDivida() },
     projecao: { titulo: "Projeção", render: () => App.financas.renderProjecao() },
     multas: { titulo: "Multas", render: () => App.multas.render() },
+    backoffice: { titulo: "Backoffice", render: () => App.backoffice.render() },
   };
 
   let abaAtual = null;
@@ -19,6 +20,7 @@
     const [aba, argumento] = location.hash.replace(/^#/, "").split("/");
     const destino = ABAS[aba] ? aba : "mes";
     if (destino === "mes" && argumento) App.financas.definirMes(argumento);
+    if (destino === "backoffice" && argumento) App.backoffice.definirEntidade(argumento);
 
     Object.keys(ABAS).forEach((id) => {
       $(`#view-${id}`).hidden = id !== destino;

@@ -106,7 +106,8 @@ function lerEstado(db) {
     categorias: db.prepare("SELECT id, nome, ordem FROM categorias_divida ORDER BY ordem").all().map((c) => ({ ...c })),
     despesas: db
       .prepare(
-        `SELECT d.id, d.slug, d.grupo_id, d.nome, d.nome_curto, d.categoria_divida, d.pago_aos_credores, d.criada_pelo_usuario
+        `SELECT d.id, d.slug, d.grupo_id, d.nome, d.nome_curto, d.categoria_divida, d.pago_aos_credores, d.criada_pelo_usuario,
+                d.ordem
          FROM despesas d JOIN grupos g ON g.id = d.grupo_id
          ORDER BY g.ordem, d.ordem, d.id`
       )
@@ -120,6 +121,7 @@ function lerEstado(db) {
         categoriaDivida: d.categoria_divida,
         pagoAosCredores: d.pago_aos_credores === 1,
         criadaPeloUsuario: d.criada_pelo_usuario === 1,
+        ordem: d.ordem,
         valores: valores.get(d.id) || {},
       })),
     entradas: db.prepare("SELECT id, mes, descricao, valor FROM entradas ORDER BY mes, id").all().map((e) => ({ ...e })),
@@ -181,7 +183,7 @@ function lerEstado(db) {
     custosCarro: db
       .prepare(
         `SELECT id, chave, descricao, detalhe, valor, pago_em, guia, validade, linha_digitavel, arquivo,
-                pdf IS NOT NULL AS tem_pdf
+                pdf IS NOT NULL AS tem_pdf, ordem
          FROM custos_carro ORDER BY ordem, id`
       )
       .all()
@@ -197,6 +199,7 @@ function lerEstado(db) {
         linhaDigitavel: c.linha_digitavel,
         arquivo: c.arquivo,
         temPdf: c.tem_pdf === 1,
+        ordem: c.ordem,
       })),
   };
 }
@@ -374,6 +377,9 @@ function removerEmprestimo(db, emprestimoId) {
 
 module.exports = {
   ErroValidacao,
+  // Usados também pelo backoffice.
+  validacao: { texto, centavos, mes, dataOuNulo, id, exigir, objeto },
+  proximosMeses,
   lerEstado,
   lerPdf,
   lerPdfCusto,
