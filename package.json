@@ -1,0 +1,15 @@
+{
+  "name": "minhas-financas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Controle das contas do mês, da dívida com a Greici e o André e das multas do carro.",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/server.js",
+    "seed": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/seed.js",
+    "seed:reset": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/seed.js --reset",
+    "importar": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/importar.js"
+  }
+}

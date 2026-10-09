@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minhas finanças</title>
+  <link rel="stylesheet" href="/app/style.css">
+</head>
+<body>
+  <main class="pagina">
+    <header class="topo">
+      <div>
+        <p class="sobretitulo">Plano para sair das dívidas</p>
+        <h1>Minhas finanças</h1>
+      </div>
+      <div class="acoes-topo">
+        <a class="botao" href="/api/backup" download title="Baixa uma cópia do banco de dados (SQLite)">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 12.5h10"/></svg>
+          Baixar backup
+        </a>
+        <button type="button" class="botao" id="sair">Sair</button>
+      </div>
+    </header>
+
+    <nav class="abas" aria-label="Seções">
+      <a href="#mes" data-aba="mes">Mês</a>
+      <a href="#divida" data-aba="divida">Greici e André</a>
+      <a href="#projecao" data-aba="projecao">Projeção</a>
+      <a href="#multas" data-aba="multas">Multas</a>
+    </nav>
+
+    <div class="cartao vazio" id="carregando" role="status">Carregando seus dados…</div>
+
+    <section id="view-mes" class="view" aria-label="Contas do mês" hidden></section>
+    <section id="view-divida" class="view" aria-label="Dívida com a Greici e o André" hidden></section>
+    <section id="view-projecao" class="view" aria-label="Projeção" hidden></section>
+
+    <section id="view-multas" class="view" aria-label="Multas e despesas do carro" hidden>
+      <div class="painel">
+        <section class="cartao resumo" aria-label="Resumo do carro">
+          <p class="rotulo">Carro em aberto <span id="m-placa" class="rotulo-extra"></span></p>
+          <p class="valor-grande" id="m-falta-valor">—</p>
+          <p class="sub" id="m-falta-qtd"></p>
+          <div class="progresso" id="m-progresso" role="progressbar" aria-label="Quanto já foi pago" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="m-progresso-barra"></span>
+          </div>
+          <dl class="mini-stats">
+            <div><dt>Pago pela Greici e André</dt><dd id="m-pago-valor">—</dd><dd class="sub" id="m-pago-qtd"></dd></div>
+            <div><dt>Total do carro</dt><dd id="m-total-valor">—</dd><dd class="sub" id="m-total-qtd"></dd></div>
+            <div><dt>Progresso</dt><dd id="m-progresso-texto">—</dd><dd class="sub">do valor total</dd></div>
+          </dl>
+        </section>
+
+        <section class="cartao vencimentos" aria-labelledby="t-vencimentos">
+          <h2 class="rotulo" id="t-vencimentos">Validade das guias em aberto</h2>
+          <ol class="lista-vencimentos" id="m-vencimentos"></ol>
+          <p class="nota">Depois da validade é preciso emitir uma nova guia no site do Detran.</p>
+        </section>
+      </div>
+
+      <div class="aviso-cartao aviso-info" role="note">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 7.5v3.5M8 5.2v.2"/></svg>
+        <div>Multas, CRLV e pátio são pagos pela Greici e pelo André. Ao marcar um item como pago, o valor entra na sua dívida com eles, na aba <a href="#divida">Greici e André</a>.</div>
+      </div>
+
+      <div class="ferramentas">
+        <div class="segmentado" role="group" aria-label="Filtrar">
+          <button type="button" data-filtro="pendentes">A pagar <span class="contagem"></span></button>
+          <button type="button" data-filtro="pagos">Pagos <span class="contagem"></span></button>
+          <button type="button" data-filtro="todos">Todos <span class="contagem"></span></button>
+        </div>
+        <label class="busca">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+          <span class="sr-only">Buscar</span>
+          <input type="search" id="m-busca" placeholder="Buscar série, infração, local…" autocomplete="off">
+        </label>
+      </div>
+
+      <div id="m-lista"></div>
+    </section>
+
+    <footer class="rodape">
+      <p>Seus dados ficam salvos no servidor. Use “Baixar backup” de vez em quando para guardar uma cópia.</p>
+    </footer>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <noscript><p class="pagina">Ative o JavaScript para usar esta página.</p></noscript>
+
+  <script src="/app/comum.js"></script>
+  <script src="/app/estado.js"></script>
+  <script src="/app/grafico.js"></script>
+  <script src="/app/multas.js"></script>
+  <script src="/app/financas.js"></script>
+  <script src="/app/main.js"></script>
+</body>
+</html>

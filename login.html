@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar · Minhas finanças</title>
+  <link rel="stylesheet" href="/app/style.css">
+</head>
+<body class="pagina-login">
+  <main class="login">
+    <form class="cartao login-cartao" id="login" autocomplete="on">
+      <p class="sobretitulo">Plano para sair das dívidas</p>
+      <h1>Minhas finanças</h1>
+      <label class="campo-rotulo" for="senha">Senha
+        <input class="campo" id="senha" name="senha" type="password" autocomplete="current-password" required autofocus>
+      </label>
+      <p class="login-erro" id="login-erro" role="alert" hidden></p>
+      <button type="submit" class="botao botao-primario">Entrar</button>
+    </form>
+  </main>
+  <script src="/app/login.js"></script>
+</body>
+</html>

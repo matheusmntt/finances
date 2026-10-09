@@ -1,0 +1,10 @@
+node_modules/
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+.DS_Store
+
+# Planilha original da tia: os dados já estão em server/seed/extraido-planilha.json.
+despesas/

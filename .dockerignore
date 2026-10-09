@@ -1,0 +1,10 @@
+.git
+.env
+data
+node_modules
+despesas
+ferramentas
+*.db
+*.db-wal
+*.db-shm
+.DS_Store

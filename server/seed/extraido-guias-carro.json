@@ -1,0 +1,27 @@
+[
+  {
+    "tipo": "deposito",
+    "guia": "0101421685",
+    "placa": "IMJ1648",
+    "arquivo": "boletos/a-vencer/6a7b02af-afba-4225-86d2-680b81a61631.pdf",
+    "emissao": "09/10/2026",
+    "validade": "09/10/2026",
+    "entrada": "06/09/2026",
+    "itens": [
+      {
+        "codigo": "8680",
+        "descricao": "REMOÇÃO VEÍCULOS EM GERAL",
+        "quantidade": 1,
+        "valor": 39527
+      },
+      {
+        "codigo": "8605",
+        "descricao": "DIÁRIA VEÍCULOS EM GERAL",
+        "quantidade": 34,
+        "valor": 137802
+      }
+    ],
+    "valor": 177329,
+    "linhaDigitavel": "856700000172 732900742022 610090101425 168500000018"
+  }
+]
