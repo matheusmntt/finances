@@ -171,6 +171,8 @@ const TIPOS = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
 };
 
 function enviarArquivo(res, relativo) {
@@ -343,7 +345,7 @@ function paginas(req, res, caminho) {
     return enviarArquivo(res, "login.html");
   }
 
-  const estatico = caminho.match(/^\/app\/([a-z0-9-]+\.(?:js|css))$/);
+  const estatico = caminho.match(/^\/app\/([a-z0-9-]+\.(?:js|css|svg|png))$/);
   if (estatico) return enviarArquivo(res, path.join("app", estatico[1]));
 
   const boleto = caminho.match(/^\/boletos\/(?:([A-Z]\d{9})|custo-(\d+))\.pdf$/);
