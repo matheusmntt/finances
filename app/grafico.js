@@ -30,7 +30,7 @@
 
   // dados: {
   //   meses,
-  //   series: [{ nome, classe, valores, tipo: "linha" | "barras" }],
+  //   series: [{ nome, classe, valores, tipo: "linha" | "barras" | "info" }], ("info" só aparece no tooltip)
   //   iHoje: índice do mês atual (linhas tracejadas e barras mais claras depois dele) | null,
   //   marcos: [{ i, texto }],
   //   altura, rotulo
@@ -44,7 +44,8 @@
     const h = altura - m.topo - m.baixo;
     const n = dados.meses.length;
     const iHoje = dados.iHoje == null ? null : dados.iHoje;
-    const todos = dados.series.flatMap((s) => s.valores.filter((v) => v != null));
+    const desenhadas = dados.series.filter((s) => s.tipo !== "info");
+    const todos = desenhadas.flatMap((s) => s.valores.filter((v) => v != null));
     const ticks = ticksBonitos(Math.min(0, ...todos), Math.max(0, ...todos), estreito ? 4 : 5);
     const yMin = ticks[0];
     const yMax = ticks[ticks.length - 1];
@@ -106,7 +107,7 @@
 
     // A primeira série fica por cima: as séries são desenhadas da última para a primeira.
     const fins = [];
-    const desenhos = [...dados.series]
+    const desenhos = [...desenhadas]
       .reverse()
       .map((s) => {
         if (s.tipo === "barras") {
@@ -135,7 +136,7 @@
         ? ""
         : fins.map((f) => `<text class="rotulo-fim" x="${x(f.i) + 10}" y="${y(f.v) + 4}">${esc(App.reaisCurto(f.v))}</text>`).join("");
 
-    const linhas = dados.series.filter((s) => s.tipo !== "barras");
+    const linhas = desenhadas.filter((s) => s.tipo !== "barras");
     const mira = `<g class="mira" visibility="hidden">
         <line y1="${m.topo}" y2="${m.topo + h}"></line>
         ${linhas.map((s) => `<circle class="ponto ${s.classe}" r="4"></circle>`).join("")}
@@ -190,7 +191,8 @@
         const linha = document.createElement("p");
         linha.className = "tooltip-linha";
         const chave = document.createElement("span");
-        chave.className = `${s.tipo === "barras" ? "chave-barra" : "chave-linha"} ${s.classe}${v < 0 ? " negativa" : ""}`;
+        chave.className =
+          s.tipo === "info" ? "chave-info" : `${s.tipo === "barras" ? "chave-barra" : "chave-linha"} ${s.classe}${v < 0 ? " negativa" : ""}`;
         const valor = document.createElement("strong");
         valor.textContent = reais(v);
         const nome = document.createElement("span");

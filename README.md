@@ -73,11 +73,11 @@ O leitor espera o modelo do recibo atual ("Folha Mensal de MM/AAAA", tabela com 
 ## Projeção
 
 - **Cards:** quando você fica livre das dívidas, a sobra por mês depois disso, o guardado no fim do plano, o patrimônio de hoje e o salário previsto.
-- **Gráficos:** guardado, o que falta devolver e patrimônio (guardado menos a dívida), e a sobra de cada mês, nos próximos 12 meses ou até o fim do plano. O tracejado e as barras mais claras são previsão.
+- **Gráficos:** o guardado no CDB, o mesmo dinheiro parado na conta corrente (soma das sobras, sem render), o que falta devolver e a linha do cenário abaixo; embaixo, a sobra de cada mês. Nos próximos 12 meses ou até o fim do plano. O tracejado e as barras mais claras são previsão.
 - **CDB:** a sobra de cada mês a partir de `cdbInicio` vira um lote que rende `cdbTaxaMensal` e paga IR pela tabela regressiva (22,5% até 6 meses, 20% até 12, 17,5% até 24 e 15% depois). O guardado mostrado já é líquido de IR.
 - **Dívida:** parte do total que a Greici e o André pagam (inclusive o que falta do carro) e desconta as parcelas de devolução; nos meses que já passaram, só as marcadas como pagas.
-- **Cenário guardando X% do bruto:** uma linha a mais no gráfico (e uma coluna na tabela) em que, depois que a dívida zera, você guarda só X% do salário bruto da última folha mensal (ou a sobra, se for menor) e gasta o resto, em vez de investir toda a sobra. X fica no próprio gráfico (padrão 20%).
-- **Metas:** a reserva de emergência (N meses do custo de vida depois das parcelas; N fica nas configurações) e metas suas em reais, com o mês em que o patrimônio chega no valor nos dois cenários. No cenário dos X%, o custo de vida é a renda menos o que é guardado, então a reserva precisa ser maior.
+- **Cenário investindo X% do bruto:** depois que a dívida zera, só X% do salário bruto da última folha mensal (ou a sobra, se for menor) vai para o CDB; o resto da sobra fica na conta, sem render. A linha mostra a parte investida; o tooltip e o card do guardado mostram também o que ficou na conta. X fica no próprio gráfico (padrão 20%).
+- **Metas:** a reserva de emergência (N meses de despesas depois das parcelas; N fica nas configurações) e metas suas em reais, com o mês em que cada valor é alcançado nos dois cenários. No cenário dos X%, a reserva conta só o que está investido; as outras metas contam o investido mais a conta.
 - **Simulador:** renda a mais ou a menos a partir de um mês, gasto extra (ou economia), antecipar a devolução e outra taxa do CDB. Muda só o que a aba mostra; nada é salvo.
 - **Mês a mês:** um resumo por ano que abre os meses.
 

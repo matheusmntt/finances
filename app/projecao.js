@@ -99,7 +99,7 @@
     return iUltimaDivida < linhas.length - 1 ? iUltimaDivida + 1 : -1;
   }
 
-  const nomeCenario = () => `Guardando ${d().config.poupancaPercentual}% do bruto`;
+  const nomeCenario = () => `Investindo ${d().config.poupancaPercentual}% do bruto`;
 
   // Mês a mês: o plano (App.calc) com os ajustes do simulador, o CDB já sem IR, a dívida com a Greici e o André
   // e o cenário em que, depois da dívida, só uma parte do salário bruto é guardada.
@@ -153,20 +153,35 @@
       Object.assign(linhas[i], v, { patrimonio: v.guardado - linhas[i].faltaDevolver });
     });
 
-    // Cenário: até a dívida zerar, igual ao plano. Depois, de hoje em diante, guarda só X% do salário bruto
-    // (ou a sobra, se for menor) e gasta o resto.
+    // Cenário: até a dívida zerar, igual ao plano. Depois, de hoje em diante, investe no CDB só X% do salário
+    // bruto (ou a sobra, se for menor); o resto da sobra fica na conta, sem render. Mês no vermelho tira primeiro
+    // da conta e depois do investimento.
     const livre = indiceLivre(linhas);
     const fracao = config.poupancaPercentual / 100;
     const bruto = salarioBruto();
+    let conta = 0;
     const aportes = linhas.map((l, i) => {
       const salario = bruto.doMes(l.mes);
-      if (livre < 0 || i <= livre || !l.futuro || salario == null) return l.saldo;
-      return Math.min(l.saldo, Math.round(fracao * salario));
+      let aporte = l.saldo;
+      if (livre >= 0 && i > livre && l.futuro && salario != null) {
+        if (l.saldo >= 0) {
+          aporte = Math.min(l.saldo, Math.round(fracao * salario));
+          conta += l.saldo - aporte;
+        } else {
+          const daConta = Math.min(conta, -l.saldo);
+          conta -= daConta;
+          aporte = l.saldo + daConta;
+        }
+      }
+      l.contaCenario = conta;
+      return aporte;
     });
     investir(meses, aportes, taxa).forEach((v, i) => {
-      linhas[i].aporteCenario = aportes[i];
-      linhas[i].guardadoCenario = v.guardado;
-      linhas[i].patrimonioCenario = v.guardado - linhas[i].faltaDevolver;
+      const l = linhas[i];
+      l.investidoCenario = v.guardado;
+      // A reserva de emergência do cenário é só o que está investido; as outras metas contam também a conta.
+      l.reservaCenario = v.guardado - l.faltaDevolver;
+      l.patrimonioCenario = v.guardado + l.contaCenario - l.faltaDevolver;
     });
     return linhas;
   }
@@ -190,12 +205,9 @@
     const iFim = Math.max(iParcelas, livre);
     const sobras = iFim >= 0 && iFim < ultimo ? linhas.slice(iFim + 1).map((l) => l.saldo) : [];
 
-    // Custo de vida depois das parcelas (ou nos próximos 12 meses): investindo toda a sobra, são as despesas;
-    // no cenário, é tudo o que não é guardado (entradas − aporte).
+    // Custo de vida: média das despesas depois das parcelas (ou dos próximos 12 meses).
     const baseCusto = sobras.length ? linhas.slice(iFim + 1) : linhas.slice(iHoje, iHoje + 12);
-    const media = (valores) => (valores.length ? Math.round(soma(valores) / valores.length) : 0);
-    const custoMensal = media(baseCusto.map((l) => l.despesas));
-    const custoCenario = media(baseCusto.map((l) => l.entradas - l.aporteCenario));
+    const custoMensal = baseCusto.length ? Math.round(soma(baseCusto.map((l) => l.despesas)) / baseCusto.length) : 0;
 
     const bruto = salarioBruto().base;
     const cenario = {
@@ -205,7 +217,7 @@
       disponivel: bruto != null && livre >= 0,
     };
 
-    return { ultimo, iHoje, iPrimeiro, livre, iFim, sobras, custoMensal, custoCenario, cenario, fim: linhas[ultimo], hoje: linhas[iHoje] };
+    return { ultimo, iHoje, iPrimeiro, livre, iFim, sobras, custoMensal, cenario, fim: linhas[ultimo], hoje: linhas[iHoje] };
   }
 
   // Primeiro mês, de hoje em diante, em que o patrimônio (do plano ou do cenário) chega ao valor.
@@ -271,12 +283,17 @@
       { rotulo: "Livre das dívidas", ...livre, plano: sim ? textoLivre(base, rb).valor : null },
       { rotulo: "Sobra por mês depois disso", ...sobra, plano: sim ? textoSobra(base, rb).valor : null },
       {
-        rotulo: `Guardado em ${App.mesCurto(r.fim.mes)}`,
+        rotulo: `Guardado no CDB em ${App.mesCurto(r.fim.mes)}`,
         valor: reais(r.fim.guardado),
         sub: d().config.cdbInicio
           ? `${reais(rendimentoLiquido)} de rendimento do CDB, já sem ${reais(r.fim.ir)} de IR`
           : "sem rendimento",
-        extras: r.cenario.disponivel ? [`${esc(nomeCenario())} depois da dívida: ${reais(r.fim.guardadoCenario)}`] : [],
+        extras: [
+          `Na conta, sem render: ${reais(r.fim.acumulado)}`,
+          ...(r.cenario.disponivel
+            ? [`${esc(nomeCenario())}: ${reais(r.fim.investidoCenario)} no CDB + ${reais(r.fim.contaCenario)} na conta`]
+            : []),
+        ],
         plano: sim ? reais(rb.fim.guardado) : null,
       },
       {
@@ -327,12 +344,12 @@
       cenario.bruto == null
         ? " Envie uma folha de pagamento para ver essa linha."
         : r.livre < 0
-          ? " A dívida não zera até o fim do plano, então essa linha não se separa do guardado."
+          ? " A dívida não zera até o fim do plano, então essa linha não se separa do guardado no CDB."
           : "";
     return `<section class="cartao grafico-cartao">
       <div class="grafico-topo">
         <div>
-          <h2>Guardado, dívida e patrimônio</h2>
+          <h2>Guardado e dívida</h2>
           <p class="sub" id="grafico-periodo"></p>
         </div>
         <div class="segmentado" role="group" aria-label="Período do gráfico">
@@ -340,17 +357,17 @@
         </div>
       </div>
       <ul class="legenda">
-        <li><span class="chave-linha serie-1"></span>Guardado</li>
+        <li><span class="chave-linha serie-1"></span>Guardado no CDB</li>
+        <li><span class="chave-linha serie-3"></span>Na conta corrente, sem render</li>
         <li><span class="chave-linha serie-2"></span>Falta devolver</li>
-        <li><span class="chave-linha serie-3"></span>Patrimônio (guardado − dívida)</li>
-        <li><span class="chave-linha serie-4"></span>${esc(nomeCenario())} depois da dívida</li>
+        <li><span class="chave-linha serie-4"></span>${esc(nomeCenario())} no CDB depois da dívida</li>
         <li><span class="chave-linha chave-prevista"></span>Tracejado: previsão</li>
       </ul>
       <label class="sub cenario-ajuste">
         <span class="chave-linha serie-4"></span>
-        <span>Cenário: depois que a dívida zera, guardar
-          <input class="campo" type="number" min="1" max="100" step="1" value="${cenario.pct}" data-poupanca-pct aria-label="Porcentagem do salário bruto guardada por mês depois da dívida">
-          % do salário bruto${valores} e gastar o resto, em vez de investir toda a sobra.${aviso}</span>
+        <span>Cenário: depois que a dívida zera, investir
+          <input class="campo" type="number" min="1" max="100" step="1" value="${cenario.pct}" data-poupanca-pct aria-label="Porcentagem do salário bruto investida por mês depois da dívida">
+          % do salário bruto${valores} no CDB e deixar o resto da sobra na conta, sem render. A linha mostra só a parte investida.${aviso}</span>
       </label>
       <div class="grafico" id="grafico-patrimonio"></div>
       <div class="grafico-topo grafico-topo-secundario">
@@ -369,6 +386,7 @@
     const trecho = linhas.slice(de, ate + 1);
     const meses = trecho.map((l) => l.mes);
     const iHoje = r.iHoje - de;
+    const noCenario = (valor) => trecho.map((l, k) => (r.cenario.disponivel && de + k >= r.livre ? valor(l) : null));
     const marcos = [{ i: iHoje, texto: "Hoje" }];
     if (r.livre > 0 && r.livre !== r.iHoje) marcos.push({ i: r.livre - de, texto: "Livre das dívidas" });
 
@@ -377,17 +395,15 @@
       meses,
       iHoje,
       marcos,
-      rotulo: "Gráfico do guardado, do que falta devolver e do patrimônio, mês a mês",
+      rotulo: "Gráfico do guardado no CDB, do guardado na conta sem render, do que falta devolver e do cenário, mês a mês",
       series: [
-        { nome: "Guardado", classe: "serie-1", valores: trecho.map((l) => l.guardado) },
+        { nome: "Guardado no CDB", classe: "serie-1", valores: trecho.map((l) => l.guardado) },
+        { nome: "Na conta, sem render", classe: "serie-3", valores: trecho.map((l) => l.acumulado) },
         { nome: "Falta devolver", classe: "serie-2", valores: trecho.map((l) => l.faltaDevolver) },
-        { nome: "Patrimônio", classe: "serie-3", valores: trecho.map((l) => l.patrimonio) },
-        {
-          nome: nomeCenario(),
-          classe: "serie-4",
-          // Sai da linha do guardado no mês em que a dívida zera.
-          valores: trecho.map((l, k) => (r.cenario.disponivel && de + k >= r.livre ? l.guardadoCenario : null)),
-        },
+        // Sai da linha do guardado no CDB no mês em que a dívida zera.
+        { nome: `${nomeCenario()} no CDB`, classe: "serie-4", valores: noCenario((l) => l.investidoCenario) },
+        // Só no tooltip: o que o cenário deixa na conta.
+        { nome: "Cenário: resto na conta", tipo: "info", valores: noCenario((l) => l.contaCenario) },
       ],
     });
     App.desenharGrafico($("#grafico-saldo"), {
@@ -400,7 +416,7 @@
     });
   }
 
-  // Uma meta em cada cenário: investindo toda a sobra e guardando só uma parte do bruto depois da dívida.
+  // Uma meta em cada cenário: investindo toda a sobra e investindo só uma parte do bruto depois da dívida.
   // cenarios: [{ rotulo, alvo, detalhe, quando, noPlano }]
   function htmlMeta({ id, nome, valor, sub, cenarios, r, extra = "" }) {
     const remover =
@@ -443,42 +459,48 @@
   function htmlMetas(linhas, r, base, rb) {
     const config = d().config;
     const sim = simulando();
-    // alvos: [investindo toda a sobra, no cenário]; alvosPlano: os mesmos sem a simulação.
-    const cenarios = (alvos, detalhes, alvosPlano = alvos) => {
-      const campos = ["patrimonio", "patrimonioCenario"];
-      const rotulos = ["Investindo toda a sobra", `${nomeCenario()} depois da dívida`];
-      return campos.slice(0, r.cenario.disponivel ? 2 : 1).map((campo, k) => {
-        const alvo = Math.max(1, alvos[k]);
+    // campoCenario: o que conta no cenário (só o investido, para a reserva, ou investido mais conta).
+    // alvoPlano: o valor sem a simulação, para comparar.
+    const cenarios = (alvo, alvoPlano, campoCenario, detalheCenario) => {
+      const lista = [{ rotulo: "Investindo toda a sobra", campo: "patrimonio" }];
+      if (r.cenario.disponivel) {
+        lista.push({ rotulo: `${nomeCenario()} depois da dívida`, campo: campoCenario, detalhe: detalheCenario });
+      }
+      return lista.map(({ rotulo, campo, detalhe }) => {
         const quando = quandoAtinge(linhas, r.iHoje, alvo, campo);
-        return {
-          rotulo: rotulos[k],
-          alvo,
-          detalhe: detalhes && detalhes[k],
-          quando,
-          // Sem simulação, "no plano" é o próprio resultado.
-          noPlano: sim ? quandoAtinge(base, rb.iHoje, Math.max(1, alvosPlano[k]), campo) : quando,
-        };
+        // Sem simulação, "no plano" é o próprio resultado.
+        return { rotulo, detalhe, alvo, quando, noPlano: sim ? quandoAtinge(base, rb.iHoje, alvoPlano, campo) : quando };
       });
     };
 
     const meses = config.reservaMeses;
-    const campoMeses = `<label class="meta-ajuste">Meses de custo de vida
-      <input class="campo" type="number" min="1" max="36" step="1" value="${meses}" data-reserva-meses aria-label="Meses de custo de vida da reserva de emergência">
+    const campoMeses = `<label class="meta-ajuste">Meses de despesas
+      <input class="campo" type="number" min="1" max="36" step="1" value="${meses}" data-reserva-meses aria-label="Meses de despesas da reserva de emergência">
     </label>`;
+    const reserva = Math.max(1, meses * r.custoMensal);
     const cartoes = [
       htmlMeta({
         nome: "Reserva de emergência",
-        sub: `${plural(meses, "mês", "meses")} do custo de vida depois das parcelas. Quem gasta mais precisa de uma reserva maior.`,
+        valor: reserva,
+        sub: `${plural(meses, "mês", "meses")} de despesas (${reais(r.custoMensal)} por mês depois das parcelas)`,
         cenarios: cenarios(
-          [meses * r.custoMensal, meses * r.custoCenario],
-          [`${meses} × ${reais(r.custoMensal)} de despesas`, `${meses} × ${reais(r.custoCenario)} (renda menos o que é guardado)`],
-          [meses * rb.custoMensal, meses * rb.custoCenario]
+          reserva,
+          Math.max(1, meses * rb.custoMensal),
+          "reservaCenario",
+          "conta só o que está investido no CDB; o que fica na conta é dinheiro livre"
         ),
         r,
         extra: campoMeses,
       }),
       ...d().metas.map((m) =>
-        htmlMeta({ id: m.id, nome: m.nome, valor: m.valor, sub: "meta sua", cenarios: cenarios([m.valor, m.valor], []), r })
+        htmlMeta({
+          id: m.id,
+          nome: m.nome,
+          valor: m.valor,
+          sub: "meta sua",
+          cenarios: cenarios(m.valor, m.valor, "patrimonioCenario", "investido mais o que fica na conta"),
+          r,
+        })
       ),
     ].join("");
     const form = `<details class="cartao adicionar-detalhes meta-nova">
@@ -491,7 +513,7 @@
     </details>`;
     return htmlSecao(
       "Metas",
-      "Quando o seu patrimônio (o que está guardado menos o que falta devolver) chega em cada valor, investindo toda a sobra e no cenário em que só uma parte do bruto é guardada.",
+      "Quando o seu patrimônio (o que está guardado menos o que falta devolver) chega em cada valor, investindo toda a sobra e no cenário em que só uma parte do bruto é investida.",
       "",
       "",
       `<div class="metas">${cartoes}</div>${form}`
@@ -589,8 +611,8 @@
             const atual = l.mes === App.mesAtual;
             return `<tr class="linha-mes${atual ? " atual" : ""}" data-ir-mes="${l.mes}"${aberto ? "" : " hidden"}>
               <th scope="row"><a href="#mes/${l.mes}">${App.mesCurto(l.mes)}</a>${atual ? ' <span class="tag">atual</span>' : ""}</th>
-              ${celula(l.entradas, false)}${celula(l.despesas, false)}${celula(l.saldo)}${celula(l.guardado)}${
-                comCenario ? celula(l.guardadoCenario) : ""
+              ${celula(l.entradas, false)}${celula(l.despesas, false)}${celula(l.saldo)}${celula(l.guardado)}${celula(l.acumulado)}${
+                comCenario ? celula(l.investidoCenario) : ""
               }${celula(l.faltaDevolver, false)}${celulaPatrimonio(l.patrimonio)}
             </tr>`;
           })
@@ -602,7 +624,7 @@
             </th>
             ${celula(soma(doAno.map((l) => l.entradas)), false)}${celula(soma(doAno.map((l) => l.despesas)), false)}${celula(
               soma(doAno.map((l) => l.saldo))
-            )}${celula(fim.guardado)}${comCenario ? celula(fim.guardadoCenario) : ""}${celula(fim.faltaDevolver, false)}${celulaPatrimonio(
+            )}${celula(fim.guardado)}${celula(fim.acumulado)}${comCenario ? celula(fim.investidoCenario) : ""}${celula(fim.faltaDevolver, false)}${celulaPatrimonio(
               fim.patrimonio
             )}
           </tr>
@@ -617,8 +639,9 @@
           <th scope="col" class="num">Entradas</th>
           <th scope="col" class="num">Despesas</th>
           <th scope="col" class="num">Sobra</th>
-          <th scope="col" class="num">Guardado</th>
-          ${comCenario ? `<th scope="col" class="num">${esc(nomeCenario())}</th>` : ""}
+          <th scope="col" class="num">No CDB</th>
+          <th scope="col" class="num">Na conta</th>
+          ${comCenario ? `<th scope="col" class="num">Investindo ${r.cenario.pct}%</th>` : ""}
           <th scope="col" class="num">Falta devolver</th>
           <th scope="col" class="num">Patrimônio</th>
         </tr></thead>
@@ -627,7 +650,7 @@
     </div>`;
     return htmlSecao(
       "Mês a mês",
-      `Na linha de cada ano: entradas, despesas e sobra somadas; guardado, dívida e patrimônio no fim do ano. Até ${App.mesCurto(
+      `Na linha de cada ano: entradas, despesas e sobra somadas; guardado, dívida e patrimônio no fim do ano. “Na conta” é a soma das sobras sem render; “Investindo ${r.cenario.pct}%” é a parte investida do cenário. Até ${App.mesCurto(
         App.mesAtual
       )} os valores são do que aconteceu; depois, previsão. Clique em um mês para ver as contas.`,
       "",
@@ -668,8 +691,8 @@
         "<strong>Sobra = entradas − despesas.</strong> Quando é negativa, o mês fecha no vermelho e o dinheiro sai do que está guardado.",
       ],
       [
-        "Guardado",
-        `A soma das sobras de todos os meses. ${cdb} Cada mês aplicado rende separado e paga Imposto de Renda pelo tempo em que ficou aplicado: 22,5% até 6 meses, 20% até 12, 17,5% até 24 e 15% depois. O valor mostrado é o que você teria se resgatasse tudo naquele mês, já sem o IR. Num mês no vermelho, o dinheiro sai das aplicações mais antigas.`,
+        "Guardado: na conta e no CDB",
+        `<strong>Na conta corrente</strong> é a soma das sobras de todos os meses, sem render nada. <strong>No CDB</strong> é o mesmo dinheiro aplicado: ${cdb} Cada mês aplicado rende separado e paga Imposto de Renda pelo tempo em que ficou aplicado: 22,5% até 6 meses, 20% até 12, 17,5% até 24 e 15% depois. O valor mostrado é o que você teria se resgatasse tudo naquele mês, já sem o IR. Num mês no vermelho, o dinheiro sai das aplicações mais antigas.`,
       ],
       [
         "Falta devolver",
@@ -679,7 +702,7 @@
       ],
       [
         "Patrimônio e “Livre das dívidas”",
-        "<strong>Patrimônio = guardado − falta devolver:</strong> o que é seu de verdade. Fica negativo enquanto a dívida for maior que o guardado. “Livre das dívidas” é o mês em que o que falta devolver chega a zero.",
+        "<strong>Patrimônio = guardado no CDB − falta devolver:</strong> o que é seu de verdade. Fica negativo enquanto a dívida for maior que o guardado. “Livre das dívidas” é o mês em que o que falta devolver chega a zero.",
       ],
       [
         "Sobra por mês depois disso",
@@ -688,20 +711,18 @@
       [
         `Cenário: ${esc(nomeCenario().toLowerCase())}`,
         rb.cenario.bruto == null
-          ? "Depois que a dívida zera, guarda só uma porcentagem do salário bruto e gasta o resto. Precisa de uma folha de pagamento para saber o bruto."
-          : `As outras linhas supõem que você investe toda a sobra. Nesta, até a dívida zerar tudo é igual ao plano; depois, todo mês você guarda ${rb.cenario.pct}% do salário bruto (${reais(
+          ? "Depois que a dívida zera, investe só uma porcentagem do salário bruto e deixa o resto na conta. Precisa de uma folha de pagamento para saber o bruto."
+          : `A linha azul supõe que você investe toda a sobra. Nesta, até a dívida zerar tudo é igual; depois, todo mês você investe no CDB ${rb.cenario.pct}% do salário bruto (${reais(
               rb.cenario.bruto
             )}, da última folha mensal): ${reais(
               rb.cenario.aporte
-            )}, ou só a sobra se ela for menor, e gasta o resto. O que é guardado rende no CDB do mesmo jeito. A porcentagem fica no próprio gráfico.`,
+            )}, ou só a sobra se ela for menor. O resto da sobra fica na conta, sem render; num mês no vermelho, sai primeiro da conta. A linha mostra só a parte investida; o tooltip e o card do guardado mostram também o que ficou na conta. A porcentagem fica no próprio gráfico.`,
       ],
       [
         "Metas",
-        `A reserva de emergência é ${plural(config.reservaMeses, "mês", "meses")} do custo de vida depois das parcelas. Investindo toda a sobra, o custo é a média das despesas (${reais(
+        `A reserva de emergência é ${plural(config.reservaMeses, "mês", "meses")} de despesas depois das parcelas (${reais(
           rb.custoMensal
-        )}); no cenário, é a renda menos o que é guardado (${reais(
-          rb.custoCenario
-        )}), porque o que não é guardado é gasto. A data de cada meta é o primeiro mês em que o patrimônio chega no valor, em cada cenário; a barra mostra quanto o patrimônio de hoje já cobre.`,
+        )} por mês, a média). Investindo toda a sobra, ela é formada pelo patrimônio; no cenário, só pelo que está investido no CDB, já que o que fica na conta é dinheiro livre. As outras metas contam todo o dinheiro do cenário (investido mais conta). A data de cada meta é o primeiro mês em que o valor é alcançado; a barra mostra quanto o patrimônio de hoje já cobre.`,
       ],
       [
         "Simulador",

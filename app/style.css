@@ -1334,6 +1334,12 @@ h1 {
   background: var(--danger);
 }
 
+.chave-info {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+}
+
 .grafico {
   position: relative;
 }
@@ -1700,6 +1706,22 @@ h1 {
 
 .explicacao-item strong {
   color: var(--text);
+}
+
+.tabela-anos th,
+.tabela-anos td {
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+.tabela-anos th:first-child,
+.tabela-anos td:first-child {
+  padding-left: 16px;
+}
+
+.tabela-anos th:last-child,
+.tabela-anos td:last-child {
+  padding-right: 16px;
 }
 
 .tabela-anos .linha-ano th,
