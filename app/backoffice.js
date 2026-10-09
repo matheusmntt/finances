@@ -215,6 +215,40 @@
       criar: ["descricao", "valor"],
     },
     {
+      id: "holerites",
+      titulo: "Folhas de pagamento",
+      descricao: "Dados lidos dos PDFs enviados na aba Salário. “Entra no mês” define em que mês o líquido conta nas entradas.",
+      layout: "fichas",
+      registros: () => App.dados.holerites,
+      chave: (x) => x.id,
+      nome: (x) => App.nomeFolha(x),
+      resumo: (x) => `${x.empresa || x.razaoSocial} · entra em ${App.nomeMes(x.mes)}`,
+      valor: (x) => x.liquido,
+      confirmar: (x) => `Remover a ${App.nomeFolha(x)}? O PDF é apagado e o líquido sai das entradas de ${App.nomeMes(x.mes)}.`,
+      campos: [
+        { campo: "mes", rotulo: "Entra no mês", tipo: "mes" },
+        { campo: "liquido", rotulo: "Líquido", tipo: "centavos" },
+        { campo: "pagoEm", rotulo: "Pago em", tipo: "data", opcional: true },
+        { campo: "tipo", rotulo: "Tipo da folha", tipo: "texto", max: 60 },
+        { campo: "competencia", rotulo: "Competência", tipo: "mes" },
+        { campo: "salarioMensal", rotulo: "Salário mensal", tipo: "centavos" },
+        { campo: "totalVencimentos", rotulo: "Total de vencimentos", tipo: "centavos" },
+        { campo: "totalDescontos", rotulo: "Total de descontos", tipo: "centavos" },
+        { campo: "baseInss", rotulo: "Base INSS", tipo: "centavos" },
+        { campo: "baseIrrf", rotulo: "Base IRRF", tipo: "centavos" },
+        { campo: "fgts", rotulo: "FGTS", tipo: "centavos" },
+        { campo: "empresa", rotulo: "Empresa", tipo: "texto", max: 120, opcional: true },
+        { campo: "razaoSocial", rotulo: "Razão social", tipo: "texto", max: 120, opcional: true },
+        { campo: "cnpj", rotulo: "CNPJ", tipo: "texto", max: 20, opcional: true },
+        { campo: "funcionario", rotulo: "Funcionário", tipo: "texto", max: 120, opcional: true },
+        { campo: "matricula", rotulo: "Matrícula", tipo: "texto", max: 20, opcional: true },
+        { campo: "cargo", rotulo: "Cargo", tipo: "texto", max: 120, opcional: true },
+        { campo: "banco", rotulo: "Banco", tipo: "texto", max: 60, opcional: true },
+        { campo: "agencia", rotulo: "Agência", tipo: "texto", max: 20, opcional: true },
+        { campo: "conta", rotulo: "Conta", tipo: "texto", max: 30, opcional: true },
+      ],
+    },
+    {
       id: "infracoes",
       titulo: "Infrações",
       novo: "Adicionar infração",
@@ -465,7 +499,7 @@
               ${x.pagoEm ? '<span class="tag tag-pago">Pago</span>' : ""}
               <span class="sub">${esc(e.resumo(x) || "")}</span>
             </span>
-            <span class="bo-ficha-valor">${reais(x.valor)}</span>
+            <span class="bo-ficha-valor">${reais(e.valor ? e.valor(x) : x.valor)}</span>
             ${App.ICONES.seta}
           </summary>
           <div class="form-grade bo-grade">${campos}</div>

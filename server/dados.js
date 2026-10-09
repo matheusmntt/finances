@@ -82,6 +82,54 @@ function lerConfig(db) {
   return config;
 }
 
+function lerHolerites(db) {
+  const itens = new Map();
+  db.prepare("SELECT holerite_id, codigo, descricao, referencia, vencimento, desconto FROM holerite_itens ORDER BY holerite_id, ordem")
+    .all()
+    .forEach((i) => {
+      if (!itens.has(i.holerite_id)) itens.set(i.holerite_id, []);
+      itens.get(i.holerite_id).push({
+        codigo: i.codigo,
+        descricao: i.descricao,
+        referencia: i.referencia,
+        vencimento: i.vencimento,
+        desconto: i.desconto,
+      });
+    });
+  return db
+    .prepare(
+      `SELECT id, mes, tipo, competencia, empresa, razao_social, cnpj, funcionario, matricula, cargo, salario_mensal,
+              base_inss, base_irrf, fgts, total_vencimentos, total_descontos, liquido, banco, agencia, conta, pago_em, arquivo
+       FROM holerites ORDER BY competencia, id`
+    )
+    .all()
+    .map((h) => ({
+      id: h.id,
+      mes: h.mes,
+      tipo: h.tipo,
+      competencia: h.competencia,
+      empresa: h.empresa,
+      razaoSocial: h.razao_social,
+      cnpj: h.cnpj,
+      funcionario: h.funcionario,
+      matricula: h.matricula,
+      cargo: h.cargo,
+      salarioMensal: h.salario_mensal,
+      baseInss: h.base_inss,
+      baseIrrf: h.base_irrf,
+      fgts: h.fgts,
+      totalVencimentos: h.total_vencimentos,
+      totalDescontos: h.total_descontos,
+      liquido: h.liquido,
+      banco: h.banco,
+      agencia: h.agencia,
+      conta: h.conta,
+      pagoEm: h.pago_em,
+      arquivo: h.arquivo,
+      itens: itens.get(h.id) || [],
+    }));
+}
+
 function lerEstado(db) {
   const valores = new Map();
   db.prepare("SELECT despesa_id, mes, valor, pago_em, pago_por_credores FROM despesa_valores ORDER BY mes")
@@ -201,6 +249,7 @@ function lerEstado(db) {
         temPdf: c.tem_pdf === 1,
         ordem: c.ordem,
       })),
+    holerites: lerHolerites(db),
   };
 }
 
@@ -210,6 +259,10 @@ function lerPdf(db, serie) {
 
 function lerPdfCusto(db, custoId) {
   return db.prepare("SELECT arquivo, pdf FROM custos_carro WHERE id = ?").get(Number(custoId));
+}
+
+function lerPdfHolerite(db, holeriteId) {
+  return db.prepare("SELECT competencia, pdf FROM holerites WHERE id = ?").get(Number(holeriteId));
 }
 
 // ---------- Despesas mensais ----------
@@ -375,6 +428,45 @@ function removerEmprestimo(db, emprestimoId) {
   if (!changes) throw new ErroValidacao("Registro não encontrado.", 404);
 }
 
+// ---------- Folhas de pagamento ----------
+
+// Guarda a folha já lida do PDF (server/holerite.js). O líquido entra no mês do pagamento
+// (ou no mês seguinte à competência, se o recibo não tiver data).
+function criarHolerite(db, folha, arquivo, pdf) {
+  const competencia = `${folha.competencia.slice(5)}/${folha.competencia.slice(0, 4)}`;
+  if (db.prepare("SELECT 1 FROM holerites WHERE tipo = ? AND competencia = ?").get(folha.tipo, folha.competencia)) {
+    throw new ErroValidacao(`Essa folha (${folha.tipo} de ${competencia}) já foi enviada. Remova a que está no app para enviar de novo.`, 409);
+  }
+  const mesDoPagamento = folha.pagoEm ? folha.pagoEm.slice(0, 7) : proximosMeses(folha.competencia, 2)[1];
+  transacao(db, () => {
+    const { lastInsertRowid } = db
+      .prepare(
+        `INSERT INTO holerites (mes, tipo, competencia, empresa, razao_social, cnpj, funcionario, matricula, cargo,
+           salario_mensal, base_inss, base_irrf, fgts, total_vencimentos, total_descontos, liquido, banco, agencia, conta,
+           pago_em, arquivo, pdf)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        mesDoPagamento, folha.tipo, folha.competencia, folha.empresa, folha.razaoSocial, folha.cnpj, folha.funcionario,
+        folha.matricula, folha.cargo, folha.salarioMensal, folha.baseInss, folha.baseIrrf, folha.fgts,
+        folha.totalVencimentos, folha.totalDescontos, folha.liquido, folha.banco, folha.agencia, folha.conta,
+        folha.pagoEm, arquivo, pdf
+      );
+    const inserirItem = db.prepare(
+      `INSERT INTO holerite_itens (holerite_id, ordem, codigo, descricao, referencia, vencimento, desconto)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    );
+    folha.itens.forEach((item, i) =>
+      inserirItem.run(lastInsertRowid, i + 1, item.codigo, item.descricao, item.referencia, item.vencimento, item.desconto)
+    );
+  });
+}
+
+function removerHolerite(db, holeriteId) {
+  const { changes } = db.prepare("DELETE FROM holerites WHERE id = ?").run(id(holeriteId));
+  if (!changes) throw new ErroValidacao("Folha de pagamento não encontrada.", 404);
+}
+
 module.exports = {
   ErroValidacao,
   // Usados também pelo backoffice.
@@ -383,6 +475,7 @@ module.exports = {
   lerEstado,
   lerPdf,
   lerPdfCusto,
+  lerPdfHolerite,
   definirValorDespesa,
   marcarDespesa,
   criarDespesa,
@@ -397,4 +490,6 @@ module.exports = {
   marcarCustoCarro,
   criarEmprestimo,
   removerEmprestimo,
+  criarHolerite,
+  removerHolerite,
 };

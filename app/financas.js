@@ -219,7 +219,10 @@
     if (p.qtd === 0) return avisos;
 
     if (p.entradas === 0) {
-      avisos.push({ tipo: "alerta", html: "<strong>Nenhuma entrada lançada neste mês.</strong> Adicione o salário e as notas PJ na seção Entradas." });
+      avisos.push({
+        tipo: "alerta",
+        html: "<strong>Nenhuma entrada lançada neste mês.</strong> Envie a folha de pagamento e adicione as notas PJ na seção Entradas.",
+      });
     } else if (p.saldo < 0) {
       avisos.push({
         tipo: p.acumulado < 0 ? "perigo" : "alerta",
@@ -254,8 +257,22 @@
     return avisos;
   }
 
+  function htmlFolha(h) {
+    const meta = [h.empresa || h.razaoSocial, h.pagoEm ? `pago em ${App.isoParaBr(h.pagoEm)}` : ""].filter(Boolean).join(" · ");
+    return `<div class="conta conta-com-acao">
+      <span class="marcador" aria-hidden="true"></span>
+      <div class="conta-info">
+        <div class="conta-nome"><span>Salário: ${esc(App.nomeFolha(h))}</span><a class="tag tag-link" href="#salario/${h.id}">Folha de pagamento</a></div>
+        <p class="meta">${esc(meta)}</p>
+      </div>
+      <div class="conta-valor">${reais(h.liquido)}</div>
+      <a class="botao botao-icone" href="/holerites/${h.id}.pdf" target="_blank" rel="noopener" aria-label="Ver PDF da ${esc(App.nomeFolha(h))}" title="Ver PDF da folha">${App.ICONES.abrir}</a>
+    </div>`;
+  }
+
   function htmlEntradas(mes) {
     const entradas = d().entradas.filter((e) => e.mes === mes);
+    const folhas = d().holerites.filter((h) => h.mes === mes);
     const linhas = entradas
       .map(
         (e) => `<div class="conta conta-editavel">
@@ -266,15 +283,29 @@
         </div>`
       )
       .join("");
+    const aviso =
+      folhas.length && entradas.length
+        ? htmlAvisos([
+            {
+              tipo: "info",
+              html: `O salário de ${App.nomeMes(mes)} vem da folha de pagamento. Se uma das outras entradas for esse mesmo salário, remova-a para não contar duas vezes.`,
+            },
+          ])
+        : "";
+    const enviar = `<label class="linha-enviar">
+      <span class="marcador-mais" aria-hidden="true">${App.ICONES.enviar}</span>
+      Enviar folha de pagamento (PDF)
+      <input type="file" accept="application/pdf,.pdf" class="sr-only" data-enviar-folha>
+    </label>`;
     return htmlSecao(
       "Entradas",
-      "Salário CLT, notas PJ e outros recebimentos. Ajuste os valores quando o mês fechar.",
+      "O salário CLT vem da folha de pagamento: envie o PDF e o líquido entra no mês em que foi pago. Notas PJ e outros recebimentos você lança aqui.",
       `<span id="mes-entradas-total">${reais(App.mesDados(mes).entradas)}</span>`,
-      plural(entradas.length, "entrada", "entradas"),
-      `<div class="cartao contas">${linhas || '<p class="vazio-linha">Nenhuma entrada lançada.</p>'}${htmlFormAdicionar(
-        "entrada",
-        "Nova entrada (ex.: Nota PJ)"
-      )}</div>`
+      plural(entradas.length + folhas.length, "entrada", "entradas"),
+      `<div class="cartao contas">${folhas.map(htmlFolha).join("")}${
+        linhas || (folhas.length ? "" : '<p class="vazio-linha">Nenhuma entrada lançada.</p>')
+      }${htmlFormAdicionar("entrada", "Nova entrada (ex.: Nota PJ)")}${enviar}</div>`,
+      aviso
     );
   }
 
@@ -498,7 +529,9 @@
 
   function aoMudarMes(evento) {
     const alvo = evento.target;
-    if (alvo.dataset.pagarDespesa) {
+    if (alvo.matches("[data-enviar-folha]")) {
+      App.salario.enviar(alvo.files[0], { irParaMes: true });
+    } else if (alvo.dataset.pagarDespesa) {
       marcarDespesa(alvo.dataset.pagarDespesa, alvo.dataset.mes, alvo.checked);
     } else if (alvo.dataset.pagarExtra) {
       marcarExtra(alvo.dataset.pagarExtra, alvo.checked);

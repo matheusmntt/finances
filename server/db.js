@@ -157,6 +157,47 @@ const MIGRACOES = [
   ALTER TABLE custos_carro ADD COLUMN editado_no_app INTEGER NOT NULL DEFAULT 0;
   ALTER TABLE infracoes ADD COLUMN editado_no_app INTEGER NOT NULL DEFAULT 0;
   `,
+  `
+  -- Folhas de pagamento enviadas em PDF. O líquido entra como salário no mês do pagamento.
+  CREATE TABLE holerites (
+    id INTEGER PRIMARY KEY,
+    mes TEXT NOT NULL,                  -- AAAA-MM em que o líquido entra nas contas
+    tipo TEXT NOT NULL,                 -- "Folha Mensal", "13º Salário"...
+    competencia TEXT NOT NULL,          -- AAAA-MM
+    empresa TEXT NOT NULL DEFAULT '',
+    razao_social TEXT NOT NULL DEFAULT '',
+    cnpj TEXT NOT NULL DEFAULT '',
+    funcionario TEXT NOT NULL DEFAULT '',
+    matricula TEXT NOT NULL DEFAULT '',
+    cargo TEXT NOT NULL DEFAULT '',
+    salario_mensal INTEGER NOT NULL DEFAULT 0,
+    base_inss INTEGER NOT NULL DEFAULT 0,
+    base_irrf INTEGER NOT NULL DEFAULT 0,
+    fgts INTEGER NOT NULL DEFAULT 0,
+    total_vencimentos INTEGER NOT NULL,
+    total_descontos INTEGER NOT NULL,
+    liquido INTEGER NOT NULL,
+    banco TEXT,
+    agencia TEXT,
+    conta TEXT,
+    pago_em TEXT,                       -- AAAA-MM-DD, data do recibo
+    arquivo TEXT,
+    pdf BLOB NOT NULL,
+    criado_em TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (tipo, competencia)
+  );
+
+  CREATE TABLE holerite_itens (
+    holerite_id INTEGER NOT NULL REFERENCES holerites(id) ON DELETE CASCADE,
+    ordem INTEGER NOT NULL,
+    codigo TEXT NOT NULL,
+    descricao TEXT NOT NULL,
+    referencia TEXT,                    -- coluna Hrs/Qtde, como no recibo
+    vencimento INTEGER NOT NULL DEFAULT 0,
+    desconto INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (holerite_id, ordem)
+  );
+  `,
 ];
 
 function abrir(caminho) {

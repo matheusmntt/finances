@@ -15,6 +15,8 @@ const PASTA_SEED = path.join(__dirname, "seed");
 
 // Tabelas de dados, na ordem em que podem ser apagadas.
 const TABELAS = [
+  "holerite_itens",
+  "holerites",
   "despesa_valores",
   "despesas",
   "entradas",

@@ -17,6 +17,7 @@ const crypto = require("node:crypto");
 const { abrir, estaVazio } = require("./db");
 const { semear } = require("./seed");
 const { importarBoletos } = require("./importar");
+const { lerHolerite } = require("./holerite");
 const backoffice = require("./backoffice");
 const dados = require("./dados");
 
@@ -28,6 +29,7 @@ const CONFIAR_PROXY = process.env.TRUST_PROXY === "1";
 const SENHA = process.env.APP_SENHA;
 const DURACAO_SESSAO = 30 * 24 * 60 * 60; // segundos
 const LIMITE_CORPO = 64 * 1024;
+const LIMITE_PDF = 5 * 1024 * 1024;
 
 if (!SENHA) {
   console.error("Defina a variável APP_SENHA (veja o README).");
@@ -192,29 +194,49 @@ function enviarArquivo(res, relativo) {
   });
 }
 
-function lerCorpo(req) {
+function lerBytes(req, limite) {
   return new Promise((resolver, rejeitar) => {
     let tamanho = 0;
     const partes = [];
     req.on("data", (parte) => {
       tamanho += parte.length;
-      if (tamanho > LIMITE_CORPO) {
+      if (tamanho > limite) {
         rejeitar(new dados.ErroValidacao("Requisição grande demais.", 413));
         req.destroy();
         return;
       }
       partes.push(parte);
     });
-    req.on("end", () => {
-      if (!partes.length) return resolver({});
-      try {
-        resolver(JSON.parse(Buffer.concat(partes).toString("utf8")));
-      } catch (e) {
-        rejeitar(new dados.ErroValidacao("JSON inválido."));
-      }
-    });
+    req.on("end", () => resolver(Buffer.concat(partes)));
     req.on("error", rejeitar);
   });
+}
+
+async function lerCorpo(req) {
+  const bytes = await lerBytes(req, LIMITE_CORPO);
+  if (!bytes.length) return {};
+  try {
+    return JSON.parse(bytes.toString("utf8"));
+  } catch (e) {
+    throw new dados.ErroValidacao("JSON inválido.");
+  }
+}
+
+// Folha de pagamento: o corpo é o próprio PDF; o nome do arquivo vem no cabeçalho X-Nome-Arquivo.
+async function enviarHolerite(req, res) {
+  if (!/^application\/pdf/.test(req.headers["content-type"] || "")) {
+    enviarJson(res, 415, { erro: "Envie a folha de pagamento em PDF." });
+    return;
+  }
+  const pdf = await lerBytes(req, LIMITE_PDF);
+  let arquivo = "folha.pdf";
+  try {
+    arquivo = path.basename(decodeURIComponent(req.headers["x-nome-arquivo"] || "")).slice(0, 120) || arquivo;
+  } catch (e) {
+    /* nome inválido: fica o padrão */
+  }
+  dados.criarHolerite(db, lerHolerite(pdf), arquivo, pdf);
+  enviarJson(res, 200, estado());
 }
 
 // Bloqueia requisições de outros sites (além do SameSite=Lax do cookie).
@@ -258,6 +280,8 @@ const ROTAS = [
 
   ["POST", /^\/api\/emprestimos$/, alterar((p, c) => dados.criarEmprestimo(db, c))],
   ["DELETE", /^\/api\/emprestimos\/(\d+)$/, alterar((p) => dados.removerEmprestimo(db, p[1]))],
+
+  ["DELETE", /^\/api\/holerites\/(\d+)$/, alterar((p) => dados.removerHolerite(db, p[1]))],
 
   ["PUT", /^\/api\/backoffice\/config$/, alterar((p, c) => backoffice.atualizarConfig(db, c))],
   ["POST", /^\/api\/backoffice\/despesas\/(\d+)\/meses$/, alterar((p, c) => backoffice.criarValoresMes(db, p[1], c))],
@@ -322,6 +346,10 @@ async function api(req, res, caminho) {
     backup(res);
     return;
   }
+  if (req.method === "POST" && caminho === "/api/holerites") {
+    await enviarHolerite(req, res);
+    return;
+  }
 
   for (const [metodo, padrao, tratar] of ROTAS) {
     const params = caminho.match(padrao);
@@ -367,6 +395,21 @@ function paginas(req, res, caminho) {
       ...SEGURANCA,
       "Content-Type": "application/pdf",
       "Content-Disposition": `inline; filename="${nome}.pdf"`,
+      "Cache-Control": "private, no-store",
+    });
+    res.end(Buffer.from(linha.pdf));
+    return;
+  }
+
+  const holerite = caminho.match(/^\/holerites\/(\d+)\.pdf$/);
+  if (holerite) {
+    if (!autenticado(req)) return redirecionar(res, "/login");
+    const linha = dados.lerPdfHolerite(db, holerite[1]);
+    if (!linha) return enviarJson(res, 404, { erro: "Folha de pagamento não encontrada." });
+    res.writeHead(200, {
+      ...SEGURANCA,
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="folha-${linha.competencia}.pdf"`,
       "Cache-Control": "private, no-store",
     });
     res.end(Buffer.from(linha.pdf));

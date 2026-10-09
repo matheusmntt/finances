@@ -210,6 +210,7 @@
 
   App.ICONES = {
     abrir: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9 3h4v4m0-4L7.5 8.5M12 9.5V13H3V4h3.5"/></svg>',
+    enviar: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 11V3m0 0L5 6m3-3 3 3M3 12.5h10"/></svg>',
     copiar:
       '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5v-.5A1.5 1.5 0 0 0 9 1.5H4A1.5 1.5 0 0 0 2.5 3v5A1.5 1.5 0 0 0 4 9.5h.5"/></svg>',
     seta: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>',

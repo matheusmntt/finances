@@ -11,7 +11,12 @@
 
   App.api = async (metodo, caminho, corpo) => {
     const opcoes = { method: metodo, headers: {}, credentials: "same-origin" };
-    if (corpo !== undefined) {
+    if (corpo instanceof Blob) {
+      // Arquivo (folha de pagamento): vai como está, com o nome no cabeçalho.
+      opcoes.headers["Content-Type"] = corpo.type || "application/pdf";
+      opcoes.headers["X-Nome-Arquivo"] = encodeURIComponent(corpo.name || "");
+      opcoes.body = corpo;
+    } else if (corpo !== undefined) {
       opcoes.headers["Content-Type"] = "application/json";
       opcoes.body = JSON.stringify(corpo);
     }
@@ -87,6 +92,7 @@
     const usados = [
       ...d.entradas.map((e) => e.mes),
       ...d.extras.map((x) => x.mes),
+      ...d.holerites.map((h) => h.mes),
       ...d.despesas.flatMap((x) => Object.keys(x.valores)),
     ];
     usados.forEach((m) => {
@@ -116,6 +122,10 @@
 
     d.entradas.forEach((e) => {
       porMes[indice.get(e.mes)].entradas += e.valor;
+    });
+    // O líquido de cada folha de pagamento entra no mês em que foi pago.
+    d.holerites.forEach((h) => {
+      porMes[indice.get(h.mes)].entradas += h.liquido;
     });
     d.despesas.forEach((despesa) =>
       Object.entries(despesa.valores).forEach(([mes, v]) => {
@@ -248,6 +258,9 @@
     if (fim === ultimo) return { recorrente: true };
     return { numero: i - inicio + 1, total: fim - inicio + 1, fim: meses[fim] };
   };
+
+  // "Folha Mensal de 08/2026"
+  App.nomeFolha = (h) => `${h.tipo} de ${h.competencia.slice(5)}/${h.competencia.slice(0, 4)}`;
 
   App.nomeCategoria = (id) => {
     const c = App.dados.categorias.find((x) => x.id === id);

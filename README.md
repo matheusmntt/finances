@@ -1,6 +1,6 @@
 # Minhas finanças
 
-App para acompanhar o plano de saída das dívidas: contas do mês, dívida com a Greici e o André (com plano de devolução editável), projeção do saldo e as multas do carro.
+App para acompanhar o plano de saída das dívidas: contas do mês, salário (folhas de pagamento em PDF), dívida com a Greici e o André (com plano de devolução editável), projeção do saldo e as multas do carro.
 
 - **Frontend:** HTML, CSS e JS puros (`index.html`, `login.html`, `app/`).
 - **Backend:** Node.js 22 sem dependências (`node:http` + `node:sqlite`), em `server/`.
@@ -60,9 +60,17 @@ Se o log mostrar "Não consigo gravar em /data", o volume foi montado sem permis
 
 > O repositório e a imagem contêm dados pessoais (boletos com placa e códigos de pagamento, valores da planilha). Mantenha o repositório **privado** e não publique a imagem em registros públicos.
 
+## Salário (folhas de pagamento)
+
+Na aba **Salário** (ou em "Enviar folha de pagamento", na seção Entradas da aba Mês) você envia o PDF do recibo. O servidor lê o texto do PDF, sem dependências, e guarda tipo e competência, empresa, cargo, cada vencimento e desconto, bases de INSS e IRRF, FGTS, conta do depósito e o próprio PDF, que dá para abrir depois.
+
+O **líquido entra nas entradas do mês em que foi pago** (a data do recibo): a folha de 08/2026 paga em 04/09/2026 conta em setembro. Para contar em outro mês, mude "Entra no mês" no Backoffice. Se você já tinha lançado esse salário como entrada à mão, a aba Mês avisa para remover a entrada antiga.
+
+O leitor espera o modelo do recibo atual ("Folha Mensal de MM/AAAA", tabela com Hrs/Qtde, Vencimentos e Descontos, totais e "Líquido") e confere se os itens fecham com os totais e o líquido. Se não fecharem, ou se o PDF for outro modelo, ele recusa o arquivo e nada é salvo. A mesma folha (tipo e competência) não pode ser enviada duas vezes.
+
 ## Backoffice
 
-A aba **Backoffice** edita direto no banco tudo o que as outras abas não editam: configurações do plano e do CDB, despesas (nome, grupo, devolução, ordem e o valor de cada mês), entradas, extras, o que a Greici e o André pagaram, multas, outras despesas do carro, infrações, grupos e categorias da dívida. Cada campo é salvo ao sair dele, com a mesma validação do servidor, e não há como desfazer: baixe um backup antes de mudanças grandes.
+A aba **Backoffice** edita direto no banco tudo o que as outras abas não editam: configurações do plano e do CDB, despesas (nome, grupo, devolução, ordem e o valor de cada mês), entradas, extras, o que a Greici e o André pagaram, multas, outras despesas do carro, folhas de pagamento, infrações, grupos e categorias da dívida. Cada campo é salvo ao sair dele, com a mesma validação do servidor, e não há como desfazer: baixe um backup antes de mudanças grandes.
 
 Multas, infrações e os dados de guia dos custos do carro alterados ali ficam marcados e o importador de boletos não os sobrescreve mais. Multas não podem ser removidas (o importador as traria de volta); para tirar uma da conta, zere o valor.
 
@@ -83,7 +91,7 @@ npm run seed         # semeia um banco vazio
 npm run seed:reset   # APAGA tudo o que foi lançado no app e semeia de novo
 ```
 
-> `seed:reset` apaga as entradas, os extras, as despesas criadas e tudo o que foi marcado como pago. Baixe um backup antes.
+> `seed:reset` apaga as entradas, os extras, as folhas de pagamento, as despesas criadas e tudo o que foi marcado como pago. Baixe um backup antes.
 
 ## Boletos novos
 
@@ -104,6 +112,7 @@ app/                     estilos e scripts do frontend
 server/server.js         servidor HTTP, login e rotas da API
 server/dados.js          leitura e alterações no banco (com validação)
 server/backoffice.js     edição direta das tabelas (aba Backoffice)
+server/holerite.js       leitura do PDF da folha de pagamento
 server/db.js             esquema do banco e migrações
 server/seed.js           seeder
 server/importar.js       importa boletos novos sem apagar o que foi lançado

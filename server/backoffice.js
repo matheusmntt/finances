@@ -258,6 +258,37 @@ const ENTIDADES = {
       }
     },
   },
+
+
+  // Folhas de pagamento: entram pelo envio do PDF (aba Salário); aqui se corrige o que foi lido.
+  holerites: {
+    tabela: "holerites",
+    chave: "id",
+    numerica: true,
+    campos: {
+      mes: campo("mes", "o mês em que o líquido entra", tipo.mes()),
+      liquido: campo("liquido", "líquido", tipo.centavos()),
+      pagoEm: campo("pago_em", "a data do pagamento", tipo.dataPagamento()),
+      tipo: campo("tipo", "o tipo da folha", tipo.texto(60)),
+      competencia: campo("competencia", "a competência", tipo.mes()),
+      salarioMensal: campo("salario_mensal", "salário mensal", tipo.centavos()),
+      totalVencimentos: campo("total_vencimentos", "total de vencimentos", tipo.centavos()),
+      totalDescontos: campo("total_descontos", "total de descontos", tipo.centavos()),
+      baseInss: campo("base_inss", "base do INSS", tipo.centavos()),
+      baseIrrf: campo("base_irrf", "base do IRRF", tipo.centavos()),
+      fgts: campo("fgts", "FGTS", tipo.centavos()),
+      empresa: campo("empresa", "a empresa", tipo.textoLivre(120)),
+      razaoSocial: campo("razao_social", "a razão social", tipo.textoLivre(120)),
+      cnpj: campo("cnpj", "o CNPJ", tipo.textoLivre(20)),
+      funcionario: campo("funcionario", "o funcionário", tipo.textoLivre(120)),
+      matricula: campo("matricula", "a matrícula", tipo.textoLivre(20)),
+      cargo: campo("cargo", "o cargo", tipo.textoLivre(120)),
+      banco: campo("banco", "o banco", tipo.textoOpcional(60)),
+      agencia: campo("agencia", "a agência", tipo.textoOpcional(20)),
+      conta: campo("conta", "a conta", tipo.textoOpcional(30)),
+    },
+    remover: true,
+  },
 };
 
 // Valores de uma despesa em cada mês (chave composta: despesa + mês).
@@ -312,9 +343,13 @@ function atualizar(db, nome, valorChave, corpo) {
   const e = entidade(nome);
   const { sets, valores, importado } = alteracoes(db, e.campos, corpo);
   if (importado) sets.push("editado_no_app = 1");
-  const { changes } = db
-    .prepare(`UPDATE ${e.tabela} SET ${sets.join(", ")} WHERE ${e.chave} = ?`)
-    .run(...valores, chave(e, valorChave));
+  let changes;
+  try {
+    ({ changes } = db.prepare(`UPDATE ${e.tabela} SET ${sets.join(", ")} WHERE ${e.chave} = ?`).run(...valores, chave(e, valorChave)));
+  } catch (erro) {
+    if (/UNIQUE constraint failed/.test(erro.message)) throw new ErroValidacao("Já existe outro registro com esses dados.", 409);
+    throw erro;
+  }
   if (!changes) throw new ErroValidacao("Registro não encontrado.", 404);
 }
 

@@ -7,6 +7,7 @@
 
   const ABAS = {
     mes: { titulo: "Mês", render: () => App.financas.renderMes() },
+    salario: { titulo: "Salário", render: () => App.salario.render() },
     divida: { titulo: "Greici e André", render: () => App.financas.renderDivida() },
     projecao: { titulo: "Projeção", render: () => App.financas.renderProjecao() },
     multas: { titulo: "Multas", render: () => App.multas.render() },
@@ -21,6 +22,7 @@
     const destino = ABAS[aba] ? aba : "mes";
     if (destino === "mes" && argumento) App.financas.definirMes(argumento);
     if (destino === "backoffice" && argumento) App.backoffice.definirEntidade(argumento);
+    if (destino === "salario" && argumento) App.salario.destacar(argumento);
 
     Object.keys(ABAS).forEach((id) => {
       $(`#view-${id}`).hidden = id !== destino;
