@@ -89,15 +89,36 @@ function importarBoletos(db) {
     );
     base.custosCarro.forEach((c) => custo.run(c.chave, c.descricao, c.detalhe, c.valor, c.ordem));
 
-    // Guias extraídas preenchem o custo correspondente com valor e boleto.
+    // Guias extraídas: a primeira de cada tipo preenche o custo de base.js (o "Pátio do depósito"); cada guia
+    // seguinte (novas diárias, por exemplo) vira um custo próprio, ligado pelo número da guia.
     const aplicarGuia = db.prepare(
       `UPDATE custos_carro SET valor = ?, detalhe = ?, guia = ?, validade = ?, linha_digitavel = ?,
          arquivo = ?, pdf = COALESCE(?, pdf)
        WHERE chave = ? AND editado_no_app = 0`
     );
-    guias.forEach((g) => {
-      const chave = base.guiasCarro[g.tipo];
-      if (!chave) return;
+    const custoDaGuia = db.prepare("SELECT chave FROM custos_carro WHERE guia = ?");
+    const baseSemGuia = db.prepare("SELECT 1 FROM custos_carro WHERE chave = ? AND guia IS NULL");
+    const novoCusto = db.prepare(
+      `INSERT INTO custos_carro (chave, descricao, detalhe, valor, ordem)
+       VALUES (?, ?, '', 0, (SELECT COALESCE(MAX(ordem), 0) + 1 FROM custos_carro))
+       ON CONFLICT (chave) DO NOTHING`
+    );
+    const dataBr = (ddmmaaaa) => ddmmaaaa.split("/").reverse().join("");
+    const emOrdem = [...guias].sort(
+      (a, b) => dataBr(a.emissao).localeCompare(dataBr(b.emissao)) || a.guia.localeCompare(b.guia)
+    );
+    emOrdem.forEach((g) => {
+      const chaveBase = base.guiasCarro[g.tipo];
+      if (!chaveBase) return;
+      let chave;
+      const existente = custoDaGuia.get(g.guia);
+      if (existente) chave = existente.chave;
+      else if (baseSemGuia.get(chaveBase)) chave = chaveBase;
+      else {
+        chave = `${chaveBase}-${g.guia}`;
+        const { descricao } = base.custosCarro.find((c) => c.chave === chaveBase);
+        novoCusto.run(chave, `${descricao} (guia ${g.guia})`);
+      }
       const { changes } = aplicarGuia.run(
         g.valor, detalheGuia(g), g.guia, g.validade, g.linhaDigitavel, path.basename(g.arquivo), lerPdf(g.arquivo), chave
       );

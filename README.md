@@ -125,7 +125,7 @@ python3 ferramentas/extrair_dados.py   # precisa de: pip install pypdf openpyxl
 npm run importar                       # ou só reinicie o servidor
 ```
 
-O extrator reconhece a guia de multa do Detran (GAD/M), o boleto GRU da PRF e a guia de remoção e depósito do Detran (GAD-E). Ele confere os dígitos e o valor do código de barras. O importador acrescenta as multas novas e atualiza as existentes **sem apagar** nada do que foi marcado no app. A guia do depósito preenche o custo "Pátio do depósito". Multas, infrações e custos alterados na aba Backoffice não são atualizados.
+O extrator reconhece a guia de multa do Detran (GAD/M), o boleto GRU da PRF e a guia de remoção e depósito do Detran (GAD-E). Ele confere os dígitos e o valor do código de barras. O importador acrescenta as multas novas e atualiza as existentes **sem apagar** nada do que foi marcado no app. A primeira guia do depósito preenche o custo "Pátio do depósito"; cada guia nova (mais diárias) entra como um custo próprio, "Pátio do depósito (guia N)". Multas, infrações e custos alterados na aba Backoffice não são atualizados.
 
 ## Estrutura
 
