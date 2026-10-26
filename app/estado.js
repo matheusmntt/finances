@@ -26,6 +26,15 @@
     } catch (e) {
       throw new Error("Sem conexão com o servidor. Tente de novo.");
     }
+    // Deploy novo enquanto a página estava aberta (comum no app instalado): recarrega para usar o código novo,
+    // que é o que entende os dados que o servidor manda agora. Uma vez por versão, para nunca entrar em laço.
+    const versao = resposta.headers.get("X-Versao");
+    const aberta = document.documentElement.dataset.versao;
+    if (versao && aberta && versao !== aberta && App.ler("versao.recarregada", null) !== versao) {
+      App.gravar("versao.recarregada", versao);
+      location.reload();
+      throw new Error("Atualizando o app…");
+    }
     if (resposta.status === 401) {
       location.href = "/login";
       throw new Error("Sua sessão expirou.");

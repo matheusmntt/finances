@@ -154,10 +154,21 @@ const CSP =
   "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; " +
   "object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
 
+// Versão do frontend: muda a cada deploy que altera um arquivo. Vai no endereço dos scripts e estilos, para
+// nenhum cache (navegador, CDN, app instalado) entregar arquivo de um deploy anterior, e no cabeçalho X-Versao
+// da API, para a página que ficou aberta recarregar quando a versão muda.
+const VERSAO = (() => {
+  const hash = crypto.createHash("sha256");
+  const arquivos = ["index.html", "login.html", ...fs.readdirSync(path.join(RAIZ, "app")).sort().map((n) => path.join("app", n))];
+  arquivos.forEach((nome) => hash.update(nome).update(fs.readFileSync(path.join(RAIZ, nome))));
+  return hash.digest("hex").slice(0, 12);
+})();
+
 function enviarJson(res, status, corpo) {
   const texto = JSON.stringify(corpo);
   res.writeHead(status, {
     ...SEGURANCA,
+    "X-Versao": VERSAO,
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
     "Content-Length": Buffer.byteLength(texto),
@@ -192,6 +203,26 @@ function enviarArquivo(res, relativo) {
       "Cache-Control": "no-cache",
     });
     res.end(conteudo);
+  });
+}
+
+// Páginas: os scripts e o estilo saem com ?v=VERSAO e a versão fica em <html data-versao>.
+function enviarPagina(res, relativo) {
+  fs.readFile(path.join(RAIZ, relativo), "utf8", (erro, conteudo) => {
+    if (erro) {
+      enviarJson(res, 404, { erro: "Não encontrado." });
+      return;
+    }
+    const html = conteudo
+      .replace(/(src|href)="(\/app\/[a-z0-9-]+\.(?:js|css))"/g, `$1="$2?v=${VERSAO}"`)
+      .replace("<html ", `<html data-versao="${VERSAO}" `);
+    res.writeHead(200, {
+      ...SEGURANCA,
+      "Content-Security-Policy": CSP,
+      "Content-Type": TIPOS[".html"],
+      "Cache-Control": "no-cache",
+    });
+    res.end(html);
   });
 }
 
@@ -376,11 +407,11 @@ function paginas(req, res, caminho) {
 
   if (caminho === "/" || caminho === "/index.html") {
     if (!autenticado(req)) return redirecionar(res, "/login");
-    return enviarArquivo(res, "index.html");
+    return enviarPagina(res, "index.html");
   }
   if (caminho === "/login") {
     if (autenticado(req)) return redirecionar(res, "/");
-    return enviarArquivo(res, "login.html");
+    return enviarPagina(res, "login.html");
   }
 
   const estatico = caminho.match(/^\/app\/([a-z0-9-]+\.(?:js|css|svg|png|json|html))$/);
