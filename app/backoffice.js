@@ -161,7 +161,15 @@
       resumo: (x) => `${nomeInfracao(x)} · infração em ${x.dataInfracao}`,
       remover: false,
       campos: [
-        { campo: "situacao", rotulo: "Situação", tipo: "opcao", opcoes: [["a-vencer", "A vencer"], ["vencidos", "Vencidos"]] },
+        {
+          campo: "cobranca",
+          rotulo: "Cobrança da guia",
+          tipo: "opcao",
+          opcoes: [
+            ["com-desconto", "Com 20% de desconto"],
+            ["com-juros", "Com juros (multa vencida)"],
+          ],
+        },
         { campo: "valorOriginal", rotulo: "Valor original", tipo: "centavos" },
         { campo: "juros", rotulo: "Juros", tipo: "centavos" },
         { campo: "valor", rotulo: "Valor a pagar", tipo: "centavos" },

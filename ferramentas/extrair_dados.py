@@ -1,7 +1,10 @@
 """Extrai os dados dos arquivos originais para o seeder do banco.
 
-- boletos/a-vencer e boletos/vencidos -> server/seed/extraido-multas.json (multas do Detran e da PRF)
-  e server/seed/extraido-guias-carro.json (guia de remoção e depósito do Detran)
+- boletos/ (qualquer subpasta) -> server/seed/extraido-multas.json (multas do Detran e da PRF)
+  e server/seed/extraido-guias-carro.json (guia de remoção e depósito do Detran).
+  O tipo de cada PDF sai do conteúdo, e o arquivo é renomeado e movido para a pasta do tipo:
+    boletos/multas/detran/<série>.pdf   boletos/multas/prf/<série>.pdf   boletos/carro/patio-<guia>.pdf
+  Então basta soltar o PDF novo em boletos/ e rodar este script.
 - despesas/*.xlsx (planilha de despesas; usa a mais recente) -> server/seed/extraido-planilha.json
 
 Os ajustes combinados (o que remover, o que é devolução, custos extras do carro...)
@@ -22,7 +25,7 @@ import unicodedata
 from datetime import date, datetime, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PASTAS_BOLETOS = ["a-vencer", "vencidos"]
+PASTA_BOLETOS = os.path.join(ROOT, "boletos")
 
 
 def centavos(valor):
@@ -123,14 +126,16 @@ def tipo_documento(t):
     return None
 
 
-def ler_multa_detran(t, caminho, situacao):
+def ler_multa_detran(t, caminho):
     infracao = re.search(r"Valor\(R\$\)\s*\n(\d{5}) (.+?)(?:\s+CTB|\n)", t)
     amparo = re.search(r"CTB\s+(\d+, ?[IVX]+)\s+(\d+)\s+(\w+)\s+([\d.,]+)", t)
     local = re.search(r"Local\s*\nMunicípio\s*\n(.+?)\n(.+?)\n", t)
     data_hora = re.search(r"Data Hora\s*\n(\d{2}/\d{2}/\d{4}) (\d{2}:\d{2})", t)
     blocos = re.search(r"(\d{12})\s+(\d{12})\s+(\d{12})\s+(\d{12})", t)
 
-    if situacao == "a-vencer":
+    # Guia emitida antes do vencimento da multa: com 20% de desconto. Depois dele: valor cheio com juros.
+    cobranca = "com-desconto" if "Valor com 20% já descontado" in t else "com-juros"
+    if cobranca == "com-desconto":
         valor = buscar(r"Valor com 20% já descontado\s*\n?R\$\s*([\d.,]+)", t)
         juros = None
     else:
@@ -148,8 +153,8 @@ def ler_multa_detran(t, caminho, situacao):
     boleto = {
         "serie": buscar(r"SérieÓrgão Fiscalizador\s*\n\s*([A-Z]\d{9})", t),
         "placa": buscar(r"Placa UF\s*\n(\w+) \w{2}\n", t),
-        "situacao": situacao,
-        "arquivo": f"boletos/{situacao}/{os.path.basename(caminho)}",
+        "cobranca": cobranca,
+        "arquivo": os.path.relpath(caminho, ROOT),
         "codigoInfracao": infracao.group(1),
         "descricao": infracao.group(2).strip(),
         "amparo": "CTB art. " + amparo.group(1),
@@ -177,7 +182,7 @@ def ler_multa_detran(t, caminho, situacao):
     return boleto
 
 
-def ler_multa_prf(t, caminho, situacao):
+def ler_multa_prf(t, caminho):
     """Boleto GRU da PRF (Consulta e Pagamento de Multas - CPAG)."""
     linhas = [l.strip() for l in t.splitlines()]
     placa = re.search(r"R\$ ([\d.,]+)([A-Z]{3}\d[A-Z0-9]\d{2})\n", t)
@@ -199,8 +204,9 @@ def ler_multa_prf(t, caminho, situacao):
     boleto = {
         "serie": buscar(r"\n([A-Z]\d{9})\n", t),
         "placa": placa.group(2),
-        "situacao": situacao,
-        "arquivo": f"boletos/{situacao}/{os.path.basename(caminho)}",
+        # O boleto da PRF sempre traz o desconto de 20% até o vencimento.
+        "cobranca": "com-desconto",
+        "arquivo": os.path.relpath(caminho, ROOT),
         "codigoInfracao": codigo,
         "descricao": descricao,
         "amparo": f"CTB {amparo}",
@@ -261,24 +267,52 @@ def ler_guia_deposito(t, caminho):
     return guia
 
 
+def organizar(caminho, destino_relativo):
+    """Move o PDF para a pasta e o nome do seu tipo (boletos/multas/detran/N006153327.pdf...)."""
+    destino = os.path.join(PASTA_BOLETOS, destino_relativo)
+    if os.path.abspath(caminho) == os.path.abspath(destino):
+        return caminho
+    if os.path.exists(destino):
+        sys.exit(f"{os.path.relpath(caminho, ROOT)}: já existe {os.path.relpath(destino, ROOT)} (PDF repetido?)")
+    os.makedirs(os.path.dirname(destino), exist_ok=True)
+    os.rename(caminho, destino)
+    print(f"Organizado: {os.path.relpath(caminho, ROOT)} -> {os.path.relpath(destino, ROOT)}")
+    return destino
+
+
+def apagar_pastas_vazias():
+    for pasta, _, _ in sorted(os.walk(PASTA_BOLETOS), key=lambda x: -len(x[0])):
+        if pasta != PASTA_BOLETOS and not [n for n in os.listdir(pasta) if n != ".DS_Store"]:
+            for n in os.listdir(pasta):
+                os.remove(os.path.join(pasta, n))
+            os.rmdir(pasta)
+
+
 def gerar_multas():
     boletos, guias, ignorados = [], [], []
-    for situacao in PASTAS_BOLETOS:
-        pasta = os.path.join(ROOT, "boletos", situacao)
-        for nome in sorted(os.listdir(pasta)):
-            if not nome.lower().endswith(".pdf"):
-                continue
-            caminho = os.path.join(pasta, nome)
-            t = texto_pdf(caminho)
-            tipo = tipo_documento(t)
-            if tipo == "multa-detran":
-                boletos.append(ler_multa_detran(t, caminho, situacao))
-            elif tipo == "multa-prf":
-                boletos.append(ler_multa_prf(t, caminho, situacao))
-            elif tipo == "guia-deposito":
-                guias.append(ler_guia_deposito(t, caminho))
-            else:
-                ignorados.append(os.path.relpath(caminho, ROOT))
+    pdfs = sorted(
+        os.path.join(pasta, nome)
+        for pasta, _, nomes in os.walk(PASTA_BOLETOS)
+        for nome in nomes
+        if nome.lower().endswith(".pdf")
+    )
+    for caminho in pdfs:
+        t = texto_pdf(caminho)
+        tipo = tipo_documento(t)
+        if tipo == "multa-detran":
+            serie = buscar(r"SérieÓrgão Fiscalizador\s*\n\s*([A-Z]\d{9})", t)
+            boletos.append(ler_multa_detran(t, organizar(caminho, f"multas/detran/{serie}.pdf")))
+        elif tipo == "multa-prf":
+            serie = buscar(r"\n([A-Z]\d{9})\n", t)
+            boletos.append(ler_multa_prf(t, organizar(caminho, f"multas/prf/{serie}.pdf")))
+        elif tipo == "guia-deposito":
+            guia = buscar(r"\n(\d{10})\n", t)
+            guias.append(ler_guia_deposito(t, organizar(caminho, f"carro/patio-{guia}.pdf")))
+        else:
+            ignorados.append(os.path.relpath(caminho, ROOT))
+    apagar_pastas_vazias()
+    boletos.sort(key=lambda b: b["serie"])
+    guias.sort(key=lambda g: (g["emissao"][6:] + g["emissao"][3:5] + g["emissao"][:2], g["guia"]))
     series = [b["serie"] for b in boletos]
     repetidas = {s for s in series if series.count(s) > 1}
     if repetidas:

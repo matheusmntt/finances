@@ -118,14 +118,23 @@ npm run seed:reset   # APAGA tudo o que foi lançado no app e semeia de novo
 
 ## Boletos novos
 
-Coloque o PDF em `boletos/a-vencer` (ou `boletos/vencidos`) e rode:
+Solte o PDF em `boletos/` (em qualquer lugar da pasta) e rode:
 
 ```bash
 python3 ferramentas/extrair_dados.py   # precisa de: pip install pypdf openpyxl
 npm run importar                       # ou só reinicie o servidor
 ```
 
-O extrator reconhece a guia de multa do Detran (GAD/M), o boleto GRU da PRF e a guia de remoção e depósito do Detran (GAD-E). Ele confere os dígitos e o valor do código de barras. O importador acrescenta as multas novas e atualiza as existentes **sem apagar** nada do que foi marcado no app. A primeira guia do depósito preenche o custo "Pátio do depósito"; cada guia nova (mais diárias) entra como um custo próprio, "Pátio do depósito (guia N)". Multas, infrações e custos alterados na aba Backoffice não são atualizados.
+O extrator reconhece pelo conteúdo a guia de multa do Detran (GAD/M), o boleto GRU da PRF e a guia de remoção e depósito do Detran (GAD-E), confere os dígitos e o valor do código de barras e **organiza o arquivo** na pasta do tipo, com um nome reconhecível:
+
+```
+boletos/
+  multas/detran/<série>.pdf     guias de multa do Detran (ex.: E032837207.pdf)
+  multas/prf/<série>.pdf        boletos da PRF (ex.: N006153327.pdf)
+  carro/patio-<guia>.pdf        guias de remoção e diárias do depósito
+```
+
+Não há mais pastas "a vencer" e "vencidos": o tipo de cobrança da guia (com 20% de desconto ou com juros) é lido do PDF, e a aba Multas separa as guias pela validade, calculada com a data de hoje: válidas, com a validade vencida (é preciso emitir outra) e pagas. O importador acrescenta as multas novas e atualiza as existentes **sem apagar** nada do que foi marcado no app. A primeira guia do depósito preenche o custo "Pátio do depósito"; cada guia nova (mais diárias) entra como um custo próprio, "Pátio do depósito (guia N)". Multas, infrações e custos alterados na aba Backoffice não são atualizados.
 
 ## Estrutura
 
@@ -141,5 +150,5 @@ server/seed.js           seeder
 server/importar.js       importa boletos novos sem apagar o que foi lançado
 server/seed/             dados iniciais
 ferramentas/             extração dos PDFs e da planilha
-boletos/                 PDFs originais (usados no primeiro seed e no importador)
+boletos/                 PDFs dos boletos, organizados por tipo (usados no seed e no importador)
 ```

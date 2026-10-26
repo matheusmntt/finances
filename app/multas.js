@@ -8,13 +8,21 @@
   const CHAVE_FILTRO = "multas.filtro.v1";
   const FILTROS = ["pendentes", "pagos", "todos"];
 
+  // Seções pela situação de hoje: guia ainda válida, guia que passou da validade (precisa de outra) e paga.
   const SECOES = [
     {
-      id: "a-vencer",
-      titulo: "A vencer",
-      nota: "Com 20% de desconto. Depois da validade, o desconto é perdido e a multa volta ao valor cheio com juros.",
+      id: "validas",
+      titulo: "Guias válidas",
+      nota: "Dá para pagar com o código até a validade. As com desconto valem 20% a menos; as com juros já são de multas vencidas.",
+      inclui: (b) => !b.pagoEm && diasAte(b.validade) >= 0,
     },
-    { id: "vencidos", titulo: "Vencidos", nota: "Já com juros de mora." },
+    {
+      id: "expiradas",
+      titulo: "Guias com a validade vencida",
+      nota: "Esse código não serve mais: emita uma guia nova no site do Detran (ou da PRF). O valor pode mudar, com juros.",
+      inclui: (b) => !b.pagoEm && diasAte(b.validade) < 0,
+    },
+    { id: "pagas", titulo: "Pagas", nota: "Pagas pela Greici e pelo André; entram na dívida com eles.", inclui: (b) => Boolean(b.pagoEm) },
   ];
 
   const filtroSalvo = App.ler(CHAVE_FILTRO, "pendentes");
@@ -60,7 +68,7 @@
   }
 
   function composicao(b) {
-    if (b.situacao === "a-vencer") return `${reais(b.valorOriginal)} − 20%`;
+    if (b.cobranca === "com-desconto") return `${reais(b.valorOriginal)} − 20%`;
     if (b.juros) return `${reais(b.valorOriginal)} + ${reais(b.juros)} juros`;
     return "";
   }
@@ -208,7 +216,7 @@
     const velocidadeDetalhe = b.velocidade
       ? `<div><dt>Velocidade</dt><dd>medida ${b.velocidade.medida} · considerada ${b.velocidade.considerada} · limite ${b.velocidade.limite} km/h</dd></div>`
       : "";
-    const desconto = b.situacao === "a-vencer" && b.valorOriginal > b.valor ? b.valorOriginal - b.valor : 0;
+    const desconto = b.cobranca === "com-desconto" && b.valorOriginal > b.valor ? b.valorOriginal - b.valor : 0;
     const valorCodigo = valorNoCodigo(b.linhaDigitavel);
     const avisoCodigo =
       desconto && valorCodigo === b.valorOriginal
@@ -328,7 +336,7 @@
   function renderLista() {
     const secoes = SECOES.map((secao) => {
       const itens = multas()
-        .filter((b) => b.situacao === secao.id && multaVisivel(b))
+        .filter((b) => secao.inclui(b) && multaVisivel(b))
         .sort(ordenar);
       if (!itens.length) return "";
       const soma = itens.reduce((total, b) => total + b.valor, 0);

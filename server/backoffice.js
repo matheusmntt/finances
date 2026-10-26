@@ -208,7 +208,7 @@ const ENTIDADES = {
     tabela: "multas",
     chave: "serie",
     campos: {
-      situacao: campo("situacao", "a situação", tipo.opcao(["a-vencer", "vencidos"]), { importado: true }),
+      cobranca: campo("cobranca", "o tipo de cobrança", tipo.opcao(["com-desconto", "com-juros"]), { importado: true }),
       valorOriginal: campo("valor_original", "valor original", tipo.centavos(), { importado: true }),
       juros: campo("juros", "juros", tipo.centavos(), { importado: true }),
       valor: campo("valor", "valor", tipo.centavos(), { importado: true }),

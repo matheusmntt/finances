@@ -215,6 +215,49 @@ const MIGRACOES = [
     criado_em TEXT NOT NULL DEFAULT (datetime('now'))
   );
   `,
+  `
+  -- Os boletos não ficam mais em pastas "a-vencer" e "vencidos" (uma guia a vencer acaba vencendo). A situação
+  -- vira o tipo de cobrança da guia, lido do PDF: com 20% de desconto ou com juros. Se está vencida ou não,
+  -- o app calcula pela validade.
+  CREATE TABLE multas_nova (
+    serie TEXT PRIMARY KEY,
+    placa TEXT,
+    cobranca TEXT NOT NULL CHECK (cobranca IN ('com-desconto', 'com-juros')),
+    arquivo TEXT,
+    pdf BLOB,
+    codigo_infracao TEXT NOT NULL,
+    descricao TEXT NOT NULL,
+    amparo TEXT,
+    pontos INTEGER,
+    infrator TEXT,
+    data_infracao TEXT NOT NULL,        -- DD/MM/AAAA, como no boleto
+    hora_infracao TEXT,
+    local TEXT,
+    municipio TEXT,
+    autuador TEXT,
+    origem TEXT,
+    velocidade_medida INTEGER,
+    velocidade_considerada INTEGER,
+    velocidade_limite INTEGER,
+    guia TEXT,
+    expedida TEXT,
+    validade TEXT NOT NULL,             -- DD/MM/AAAA
+    valor_original INTEGER NOT NULL,
+    juros INTEGER NOT NULL DEFAULT 0,
+    valor INTEGER NOT NULL,
+    linha_digitavel TEXT,
+    pago_em TEXT,
+    editado_no_app INTEGER NOT NULL DEFAULT 0
+  );
+  INSERT INTO multas_nova
+    SELECT serie, placa, CASE situacao WHEN 'a-vencer' THEN 'com-desconto' ELSE 'com-juros' END, arquivo, pdf,
+           codigo_infracao, descricao, amparo, pontos, infrator, data_infracao, hora_infracao, local, municipio,
+           autuador, origem, velocidade_medida, velocidade_considerada, velocidade_limite, guia, expedida, validade,
+           valor_original, juros, valor, linha_digitavel, pago_em, editado_no_app
+    FROM multas;
+  DROP TABLE multas;
+  ALTER TABLE multas_nova RENAME TO multas;
+  `,
 ];
 
 function abrir(caminho) {

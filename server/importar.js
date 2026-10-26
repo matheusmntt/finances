@@ -54,13 +54,13 @@ function importarBoletos(db) {
 
     const existe = db.prepare("SELECT 1 FROM multas WHERE serie = ?");
     const multa = db.prepare(`INSERT INTO multas (
-        serie, placa, situacao, arquivo, pdf, codigo_infracao, descricao, amparo, pontos, infrator,
+        serie, placa, cobranca, arquivo, pdf, codigo_infracao, descricao, amparo, pontos, infrator,
         data_infracao, hora_infracao, local, municipio, autuador, origem,
         velocidade_medida, velocidade_considerada, velocidade_limite,
         guia, expedida, validade, valor_original, juros, valor, linha_digitavel
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT (serie) DO UPDATE SET
-        placa = excluded.placa, situacao = excluded.situacao, arquivo = excluded.arquivo,
+        placa = excluded.placa, cobranca = excluded.cobranca, arquivo = excluded.arquivo,
         pdf = COALESCE(excluded.pdf, multas.pdf), codigo_infracao = excluded.codigo_infracao,
         descricao = excluded.descricao, amparo = excluded.amparo, pontos = excluded.pontos,
         infrator = excluded.infrator, data_infracao = excluded.data_infracao, hora_infracao = excluded.hora_infracao,
@@ -75,7 +75,7 @@ function importarBoletos(db) {
       else resultado.multasNovas.push(b.serie);
       const v = b.velocidade || {};
       multa.run(
-        b.serie, b.placa, b.situacao, path.basename(b.arquivo), lerPdf(b.arquivo), b.codigoInfracao, b.descricao,
+        b.serie, b.placa, b.cobranca, path.basename(b.arquivo), lerPdf(b.arquivo), b.codigoInfracao, b.descricao,
         b.amparo, b.pontos ?? null, b.infrator ?? null, b.dataInfracao, b.horaInfracao, b.local, b.municipio,
         b.autuador, b.origem ?? null, v.medida ?? null, v.considerada ?? null, v.limite ?? null,
         b.guia, b.expedida, b.validade, b.valorOriginal, b.juros, b.valor, b.linhaDigitavel

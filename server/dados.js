@@ -196,7 +196,7 @@ function lerEstado(db) {
     infracoes,
     multas: db
       .prepare(
-        `SELECT serie, placa, situacao, arquivo, pdf IS NOT NULL AS tem_pdf, codigo_infracao, descricao, amparo, pontos,
+        `SELECT serie, placa, cobranca, arquivo, pdf IS NOT NULL AS tem_pdf, codigo_infracao, descricao, amparo, pontos,
                 infrator, data_infracao, hora_infracao, local, municipio, autuador, origem, velocidade_medida,
                 velocidade_considerada, velocidade_limite, guia, expedida, validade, valor_original, juros, valor,
                 linha_digitavel, pago_em
@@ -206,7 +206,7 @@ function lerEstado(db) {
       .map((m) => ({
         serie: m.serie,
         placa: m.placa,
-        situacao: m.situacao,
+        cobranca: m.cobranca,
         arquivo: m.arquivo,
         temPdf: m.tem_pdf === 1,
         codigoInfracao: m.codigo_infracao,
