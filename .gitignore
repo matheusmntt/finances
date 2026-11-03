@@ -9,4 +9,4 @@ data/
 *.tsbuildinfo
 
 # Planilha original da tia: os dados já estão em apps/api/src/db/seed/planilha.json.
-despesas/
+/despesas/
