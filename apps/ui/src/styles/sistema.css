@@ -1,0 +1,1099 @@
+/* Sistema visual da v2: componentes renovados, microinterações e animações. Vem depois do global.css e
+   ganha dele nos mesmos seletores. Durações e curvas vêm dos tokens (--dur-*, --ease-*): rápidas e
+   discretas, e zeram com prefers-reduced-motion (fim do arquivo). */
+
+body {
+  transition:
+    background-color var(--dur-lenta) var(--ease),
+    color var(--dur-lenta) var(--ease);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.valor-grande,
+.mini-stats dd,
+.stat-valor,
+.conta-valor,
+.secao-total strong {
+  font-feature-settings: "tnum", "cv11";
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Botões ---------- */
+
+.botao {
+  position: relative;
+  height: 36px;
+  padding: 0 14px;
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+  font-weight: 550;
+  transition:
+    background-color var(--dur-rapida) var(--ease),
+    border-color var(--dur-rapida) var(--ease),
+    color var(--dur-rapida) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur-rapida) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.botao:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+/* Pressionar: afunda um pouco. */
+.botao:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
+
+.botao:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.botao[aria-busy="true"] {
+  opacity: 0.85;
+  cursor: progress;
+}
+
+.botao-icone {
+  width: 36px;
+  padding: 0;
+}
+
+.botao-primario {
+  border-color: transparent;
+  background: var(--accent);
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgb(255 255 255 / 0.18);
+  color: var(--on-accent);
+}
+
+.botao-primario:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--accent-hover);
+  filter: none;
+}
+
+.botao-perigo {
+  border-color: transparent;
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.botao-perigo:hover:not(:disabled) {
+  border-color: transparent;
+  background: color-mix(in oklab, var(--danger) 88%, black);
+}
+
+.botao-fantasma {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+}
+
+.botao-fantasma:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.botao-fantasma.botao-icone:hover:not(:disabled) {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* Feedback dentro do botão: ✓ verde por um instante; erro balança. */
+.botao[data-feedback="ok"] {
+  border-color: color-mix(in oklab, var(--ok) 45%, transparent);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.botao[data-feedback="ok"] svg {
+  animation: pop var(--dur-lenta) var(--ease-mola);
+}
+
+.botao[data-feedback="erro"],
+.treme {
+  animation: treme 0.32s var(--ease);
+}
+
+.botao.copiado {
+  border-color: color-mix(in oklab, var(--ok) 45%, transparent);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.icone-tema {
+  display: inline-flex;
+}
+
+/* ---------- Cartões e seções ---------- */
+
+.cartao {
+  border-color: var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition:
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+/* Cartões clicáveis/expansíveis: sobem de leve no hover. */
+.cartao-interativo {
+  transition:
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.cartao-interativo:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-2);
+  transform: translateY(-1px);
+}
+
+.resumo {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      120% 140% at 100% 0%,
+      var(--accent-soft) 0%,
+      transparent 55%
+    ),
+    var(--surface);
+}
+
+.rotulo {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.valor-grande {
+  font-size: 40px;
+  letter-spacing: -0.03em;
+}
+
+.progresso {
+  height: 8px;
+  background: var(--surface-3);
+}
+
+.progresso span {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--ok) 80%, white),
+    var(--ok)
+  );
+  transition: width 0.6s var(--ease-entrada);
+}
+
+.secao-topo h2 {
+  letter-spacing: -0.015em;
+}
+
+/* Número que acabou de mudar: um brilho curto de fundo. */
+.numero {
+  border-radius: 6px;
+  transition:
+    background-color var(--dur-lenta) var(--ease),
+    box-shadow var(--dur-lenta) var(--ease);
+}
+
+.numero.mudou {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---------- Campos ---------- */
+
+.campo,
+.seletor-mes,
+.busca {
+  border-color: var(--border);
+  transition:
+    border-color var(--dur-rapida) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
+}
+
+.campo:hover,
+.seletor-mes:hover {
+  border-color: var(--border-strong);
+}
+
+.campo:focus,
+.seletor-mes:focus-visible,
+.busca:focus-within {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.campo.invalido {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--danger) 22%, transparent);
+  animation: treme 0.32s var(--ease);
+}
+
+/* Campo editado no lugar que acabou de salvar: anel verde que some. */
+.campo[data-salvo] {
+  animation: salvo 0.9s var(--ease);
+}
+
+/* ---------- Caixa de marcar ---------- */
+
+.check input,
+.check-valor input {
+  border-radius: 7px;
+  transition:
+    background-color var(--dur-rapida) var(--ease),
+    border-color var(--dur-rapida) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur-rapida) var(--ease);
+}
+
+.check input:hover:not(:disabled),
+.check-valor input:hover:not(:disabled) {
+  box-shadow: 0 0 0 4px var(--ok-soft);
+}
+
+.check input:active:not(:disabled),
+.check-valor input:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
+.check input:checked,
+.check-valor input:checked {
+  animation: pop var(--dur-lenta) var(--ease-mola);
+}
+
+.check input::after,
+.check-valor input::after {
+  transition: transform var(--dur) var(--ease-mola);
+}
+
+/* Conta paga: some um pouco, sem pular. */
+.conta,
+.boleto {
+  transition:
+    background-color var(--dur) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.conta .conta-info,
+.conta .conta-valor,
+.boleto .info,
+.boleto .valor {
+  transition: opacity var(--dur) var(--ease);
+}
+
+.conta:hover {
+  background: color-mix(in oklab, var(--surface-2) 55%, transparent);
+}
+
+/* ---------- Abas ---------- */
+
+.abas {
+  gap: 2px;
+  margin-bottom: 28px;
+}
+
+.abas a {
+  position: relative;
+  border-bottom: 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition:
+    color var(--dur-rapida) var(--ease),
+    background-color var(--dur-rapida) var(--ease);
+}
+
+.abas a:hover {
+  background: var(--surface-2);
+}
+
+.abas a[aria-current="page"] {
+  border-bottom: 0;
+}
+
+.aba-indicador {
+  position: absolute;
+  right: 10px;
+  bottom: 0;
+  left: 10px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+}
+
+/* ---------- Segmentado (pílula que desliza) ---------- */
+
+.segmentado {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+
+.segmentado button {
+  position: relative;
+  isolation: isolate;
+  border-radius: 8px;
+  transition: color var(--dur-rapida) var(--ease);
+}
+
+.segmentado button:hover {
+  color: var(--text);
+}
+
+.segmentado button[aria-pressed="true"] {
+  background: transparent;
+  box-shadow: none;
+}
+
+.segmentado-pilula {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px rgb(16 24 40 / 0.1),
+    0 0 0 1px var(--border);
+}
+
+.segmentado-texto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- Expansão de <details> nativo ---------- */
+
+details::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  opacity: 0;
+  transition:
+    block-size var(--dur-lenta) var(--ease),
+    opacity var(--dur) var(--ease),
+    content-visibility var(--dur-lenta) allow-discrete;
+}
+
+details[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
+summary {
+  transition: color var(--dur-rapida) var(--ease);
+}
+
+summary svg {
+  transition: transform var(--dur) var(--ease);
+}
+
+details[open] > summary .marcador-mais svg,
+details[open] > summary > svg:last-child {
+  transform: rotate(45deg);
+}
+
+.botao-icone[aria-expanded] svg {
+  transition: transform var(--dur) var(--ease);
+}
+
+/* ---------- Toasts ---------- */
+
+.toasts {
+  position: fixed;
+  right: 0;
+  bottom: 20px;
+  left: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+.toasts ol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(460px, 100%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toast {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 10px 8px 10px 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--text) 85%, transparent);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--text) 94%, var(--accent));
+  box-shadow: var(--shadow-3);
+  color: var(--bg);
+  font-size: 14px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition: none;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.toast:active {
+  cursor: grabbing;
+}
+
+.toast-icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--bg) 14%, transparent);
+}
+
+.toast-icone svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.2;
+}
+
+.toast-ok .toast-icone {
+  background: var(--ok);
+  color: var(--on-ok);
+}
+
+.toast-erro .toast-icone {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.toast-mensagem {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast button {
+  text-decoration: none;
+}
+
+.toast-acao {
+  flex: none;
+  height: 28px;
+  padding: 0 10px !important;
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--bg) 14%, transparent) !important;
+  color: inherit;
+  font-weight: 650 !important;
+  transition: background-color var(--dur-rapida) var(--ease);
+}
+
+.toast-acao:hover {
+  background: color-mix(in oklab, var(--bg) 24%, transparent) !important;
+}
+
+.toast-fechar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0 !important;
+  border-radius: 7px;
+  opacity: 0.6;
+  transition:
+    opacity var(--dur-rapida) var(--ease),
+    background-color var(--dur-rapida) var(--ease);
+}
+
+.toast-fechar:hover {
+  background: color-mix(in oklab, var(--bg) 14%, transparent) !important;
+  opacity: 1;
+}
+
+/* Quanto tempo falta para o toast sumir. */
+.toast-tempo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: color-mix(in oklab, var(--bg) 35%, transparent);
+  transform-origin: left;
+  animation: tempo linear forwards;
+}
+
+/* ---------- Diálogo (overlay) ---------- */
+
+.dialogo {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: var(--overlay);
+  backdrop-filter: blur(3px);
+  color: var(--text);
+}
+
+.dialogo[open] {
+  display: grid;
+  place-items: center;
+}
+
+.dialogo::backdrop {
+  background: transparent;
+}
+
+.dialogo-cartao {
+  width: min(420px, 100%);
+  padding: 22px 22px 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-3);
+}
+
+.dialogo-cartao h2 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.dialogo-cartao p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.dialogo-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ---------- Esqueletos ---------- */
+
+.esqueleto {
+  display: block;
+  flex: none;
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, transparent 0%, var(--brilho) 50%, transparent 100%)
+    no-repeat,
+    var(--surface-3);
+  background-size:
+    60% 100%,
+    100% 100%;
+  background-position:
+    -150% 0,
+    0 0;
+  animation: brilho 1.4s var(--ease) infinite;
+}
+
+.esqueleto-pagina {
+  display: grid;
+  gap: 14px;
+}
+
+.esqueleto-resumo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px 32px;
+  align-items: end;
+  padding: 20px 22px;
+}
+
+.esqueleto-stats {
+  display: flex;
+  gap: 32px;
+}
+
+.esqueleto-barra {
+  grid-column: 1 / -1;
+}
+
+.esqueleto-texto {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+}
+
+.esqueleto-titulo {
+  margin-top: 14px;
+}
+
+.esqueleto-lista {
+  padding: 4px 0;
+}
+
+.esqueleto-linha {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.esqueleto-linha:first-child {
+  border-top: 0;
+}
+
+/* Conteúdo atualizando no lugar (sem trocar por esqueleto): fica um pouco apagado. */
+[data-atualizando] {
+  opacity: 0.6;
+  transition: opacity var(--dur) var(--ease);
+}
+
+/* ---------- Arrastar para reordenar ---------- */
+
+.alca {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--subtle);
+  cursor: grab;
+  touch-action: none;
+  transition:
+    color var(--dur-rapida) var(--ease),
+    background-color var(--dur-rapida) var(--ease);
+}
+
+.alca:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.ordenavel {
+  position: relative;
+}
+
+.ordenavel.arrastando {
+  z-index: 2;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-3);
+  cursor: grabbing;
+}
+
+.ordenavel.arrastando .alca {
+  background: var(--accent-soft);
+  color: var(--accent);
+  cursor: grabbing;
+}
+
+tr.ordenavel.arrastando > * {
+  background: var(--surface);
+}
+
+.ordenavel.soltou {
+  animation: soltou 0.45s var(--ease);
+}
+
+/* ---------- Zona de arquivo ---------- */
+
+.zona-arquivo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+.zona-arquivo:hover,
+.zona-arquivo:focus-within {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.zona-arquivo:focus-within {
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.zona-arquivo[data-sobre] {
+  border-color: var(--accent);
+  border-style: solid;
+  background: var(--accent-soft);
+  transform: scale(1.01);
+}
+
+.zona-arquivo[data-enviando] {
+  cursor: progress;
+}
+
+.zona-arquivo-icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  transition: transform var(--dur) var(--ease-mola);
+}
+
+.zona-arquivo[data-sobre] .zona-arquivo-icone {
+  transform: translateY(-3px) scale(1.08);
+}
+
+.zona-arquivo-texto {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.zona-arquivo-texto strong {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.zona-arquivo-texto span {
+  font-size: 13px;
+}
+
+/* ---------- Gráficos ---------- */
+
+.grafico-bloco {
+  display: grid;
+  gap: 10px;
+}
+
+.grafico .linha {
+  stroke-width: 2.25;
+}
+
+.grafico .linha.prevista {
+  stroke-dasharray: 5 5;
+}
+
+.grafico .area {
+  stroke: none;
+}
+
+.grafico .grade line {
+  stroke: var(--border);
+  stroke-dasharray: 2 4;
+}
+
+.grafico .grade line.zero {
+  stroke: var(--border-strong);
+  stroke-dasharray: none;
+}
+
+.grafico text {
+  fill: var(--subtle);
+  font-feature-settings: "tnum";
+}
+
+.grafico .eixo text {
+  transition: fill var(--dur-rapida) var(--ease);
+}
+
+.grafico .eixo text.ativo {
+  fill: var(--text);
+  font-weight: 600;
+}
+
+/* Barras: arredondadas na ponta; as dos outros meses apagam quando um mês está sob o cursor. */
+.grafico .barra {
+  transition: opacity var(--dur) var(--ease);
+}
+
+.grafico .barra.apagada {
+  opacity: 0.35;
+}
+
+.grafico .barra.prevista.apagada {
+  opacity: 0.2;
+}
+
+.grafico .faixa-mes {
+  fill: var(--surface-2);
+  pointer-events: none;
+}
+
+.grafico .ponto {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.grafico .mira line {
+  stroke: var(--border-strong);
+  stroke-dasharray: none;
+}
+
+.grafico .marco text {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.grafico svg:focus-visible {
+  border-radius: var(--radius-sm);
+}
+
+.grafico-esqueleto {
+  width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.tooltip-grafico {
+  min-width: 220px;
+  border-color: var(--border);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow-3);
+  backdrop-filter: blur(8px);
+  transform-origin: top left;
+}
+
+.tooltip-linha strong {
+  font-feature-settings: "tnum";
+}
+
+/* Legenda interativa: cada série é um botão que esconde ou mostra a linha. */
+.legenda-interativa {
+  gap: 6px;
+}
+
+.legenda-interativa button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    opacity var(--dur) var(--ease),
+    background-color var(--dur-rapida) var(--ease),
+    border-color var(--dur-rapida) var(--ease),
+    transform var(--dur-rapida) var(--ease);
+}
+
+.legenda-interativa button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.legenda-interativa button:active {
+  transform: scale(0.96);
+}
+
+.legenda-interativa button[aria-pressed="false"] {
+  opacity: 0.5;
+  text-decoration: line-through;
+  text-decoration-color: var(--subtle);
+}
+
+.legenda-nota {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ---------- Spinner ---------- */
+
+.girando {
+  animation: girar 0.7s linear infinite;
+}
+
+/* ---------- Destaque de um item (ir para a multa, mês novo) ---------- */
+
+.boleto.destaque,
+.destaque {
+  animation: destaque 1.6s var(--ease);
+}
+
+@keyframes destaque {
+  0%,
+  30% {
+    box-shadow:
+      0 0 0 3px var(--ring),
+      var(--shadow-2);
+  }
+  100% {
+    box-shadow:
+      0 0 0 3px transparent,
+      var(--shadow);
+  }
+}
+
+/* ---------- Troca de tema: círculo que se abre a partir do botão ---------- */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: revelar 0.45s var(--ease) both;
+}
+
+@keyframes revelar {
+  from {
+    clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 0));
+  }
+  to {
+    clip-path: circle(150vmax at var(--vt-x, 50%) var(--vt-y, 0));
+  }
+}
+
+/* ---------- Animações ---------- */
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes treme {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes salvo {
+  0%,
+  30% {
+    border-color: var(--ok);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ok) 25%, transparent);
+  }
+}
+
+@keyframes soltou {
+  0% {
+    box-shadow: 0 0 0 2px var(--ring);
+  }
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
+@keyframes brilho {
+  to {
+    background-position:
+      250% 0,
+      0 0;
+  }
+}
+
+@keyframes tempo {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 560px) {
+  .esqueleto-resumo {
+    grid-template-columns: 1fr;
+  }
+
+  .esqueleto-stats {
+    flex-wrap: wrap;
+    gap: 16px 24px;
+  }
+
+  .toasts {
+    bottom: 12px;
+  }
+}
+
+/* Menos movimento: sem animações nem transições (o motion respeita isso pelo MotionConfig). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-new(root),
+  details::details-content {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

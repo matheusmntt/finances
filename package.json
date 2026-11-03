@@ -1,15 +1,17 @@
 {
-  "name": "minhas-financas",
-  "version": "1.0.0",
+  "name": "financas",
+  "version": "2.0.0",
   "private": true,
-  "description": "Controle das contas do mês, da dívida com a Greici e o André e das multas do carro.",
+  "type": "module",
+  "packageManager": "pnpm@12.8.1",
   "engines": {
-    "node": ">=22.13"
+    "node": ">=26"
   },
   "scripts": {
-    "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/server.js",
-    "seed": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/seed.js",
-    "seed:reset": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/seed.js --reset",
-    "importar": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env server/importar.js"
+    "dev": "pnpm --parallel --filter api --filter ui dev",
+    "build": "pnpm --recursive build",
+    "typecheck": "pnpm --recursive typecheck",
+    "lint": "pnpm --recursive lint",
+    "test": "pnpm --recursive test"
   }
 }

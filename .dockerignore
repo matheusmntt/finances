@@ -1,7 +1,9 @@
 .git
-.env
+**/node_modules
+**/dist
+**/.env
+legacy
 data
-node_modules
 despesas
 ferramentas
 *.db

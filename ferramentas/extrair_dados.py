@@ -1,15 +1,15 @@
 """Extrai os dados dos arquivos originais para o seeder do banco.
 
-- boletos/ (qualquer subpasta) -> server/seed/extraido-multas.json (multas do Detran e da PRF)
-  e server/seed/extraido-guias-carro.json (guia de remoção e depósito do Detran).
+- boletos/ (qualquer subpasta) -> apps/api/src/db/seed/multas.json (multas do Detran e da PRF)
+  e apps/api/src/db/seed/guias-carro.json (guia de remoção e depósito do Detran).
   O tipo de cada PDF sai do conteúdo, e o arquivo é renomeado e movido para a pasta do tipo:
     boletos/multas/detran/<série>.pdf   boletos/multas/prf/<série>.pdf   boletos/carro/patio-<guia>.pdf
   Então basta soltar o PDF novo em boletos/ e rodar este script.
-- despesas/*.xlsx (planilha de despesas; usa a mais recente) -> server/seed/extraido-planilha.json
+- despesas/*.xlsx (planilha de despesas; usa a mais recente) -> apps/api/src/db/seed/planilha.json
 
 Os ajustes combinados (o que remover, o que é devolução, custos extras do carro...)
-ficam em server/seed/base.js. Depois de extrair, rode `npm run importar` (ou reinicie o
-servidor): os boletos novos entram no banco sem apagar nada do que foi lançado no app.
+ficam em apps/api/src/db/seed/base.ts. Depois de extrair, reinicie a API:
+os boletos novos entram no banco sem apagar nada do que foi lançado no app.
 
 Uso (a partir da pasta do projeto):
     python3 ferramentas/extrair_dados.py
@@ -47,7 +47,7 @@ def slug(texto):
 
 
 def gravar_json(nome, dados):
-    destino = os.path.join(ROOT, "server", "seed", nome)
+    destino = os.path.join(ROOT, "apps", "api", "src", "db", "seed", nome)
     with open(destino, "w", encoding="utf-8") as f:
         json.dump(dados, f, ensure_ascii=False, indent=2)
         f.write("\n")
@@ -317,9 +317,9 @@ def gerar_multas():
     repetidas = {s for s in series if series.count(s) > 1}
     if repetidas:
         sys.exit(f"Séries repetidas entre os PDFs: {sorted(repetidas)}")
-    destino = gravar_json("extraido-multas.json", boletos)
+    destino = gravar_json("multas.json", boletos)
     print(f"{len(boletos)} multas gravadas em {destino}")
-    destino = gravar_json("extraido-guias-carro.json", guias)
+    destino = gravar_json("guias-carro.json", guias)
     print(f"{len(guias)} guia(s) do carro gravada(s) em {destino}")
     for caminho in ignorados:
         print(f"AVISO: formato não reconhecido, ignorado: {caminho}")
@@ -488,10 +488,10 @@ def conferir_planilha(d):
 def gerar_planilha():
     caminho = planilha_mais_recente()
     if not caminho:
-        print("Sem planilha em despesas/: mantendo server/seed/extraido-planilha.json como está.")
+        print("Sem planilha em despesas/: mantendo apps/api/src/db/seed/planilha.json como está.")
         return
     dados = ler_planilha(caminho)
-    destino = gravar_json("extraido-planilha.json", dados)
+    destino = gravar_json("planilha.json", dados)
     print(f"Planilha '{dados['arquivo']}' ({len(dados['meses'])} meses) gravada em {destino}")
 
 
